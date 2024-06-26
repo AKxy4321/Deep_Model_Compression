@@ -3,5 +3,4 @@ scikit-learn
 matplotlib
 kerassurgeon
 tensorflow>=1.0,<1.15
-
-
+pandas
