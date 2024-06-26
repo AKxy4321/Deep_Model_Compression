@@ -1,6 +1,8 @@
-tensorflow_gpu>=1.0,<1.15
+tensorflow_gpu==1.15.0
+keras==2.2.4
+numpy==1.16.4
+tensorflow==1.15.0
 scikit-learn
 matplotlib
 kerassurgeon
-tensorflow>=1.0,<1.15
 pandas
