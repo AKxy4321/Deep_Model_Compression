@@ -631,5 +631,5 @@ print("Final Validation acc = ",(max(history.history['val_acc'])*100))
 log_df = pd.DataFrame(log_dict)
 log_df
 
-log_df.to_csv('/content/drive/My Drive/paper results/SS3.csv')
+log_df.to_csv('./lenet5_2_results.csv')
 
