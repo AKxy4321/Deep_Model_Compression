@@ -690,13 +690,13 @@ else:
     model = resnet_v1(input_shape=input_shape, depth=depth)
 
 model.compile(loss='categorical_crossentropy',
-              optimizer=Adam(learning_rate=lr_schedule(0)),
+              optimizer=Adam(lr=lr_schedule(0)),
               metrics=['accuracy'])
 model = load_model('./before_resnet.h5')
 a = model.evaluate(x_test,y_test)
 print(a)
 model.compile(loss='categorical_crossentropy',
-              optimizer=Adam(learning_rate=lr_schedule(0)),
+              optimizer=Adam(lr=lr_schedule(0)),
               metrics=['accuracy'])
 
 
@@ -785,7 +785,7 @@ def train(model,epochs):
     gw = Get_Weights(True)
     callbacks = [lr_reducer, lr_scheduler,gw]
     model.compile(loss='categorical_crossentropy',
-                optimizer=Adam(learning_rate=lr_schedule(0)),
+                optimizer=Adam(lr=lr_schedule(0)),
                 metrics=['accuracy'])
 
     print('Using real-time data augmentation.')
@@ -887,7 +887,7 @@ def optimize(model,weight_list_per_epoch,epochs,percentage):
     print("INITIAL REGULARIZER VALUE ",my_get_regularizer_value(model,weight_list_per_epoch,percentage,True))
 
     model.compile(loss=model_loss,
-                optimizer=Adam(learning_rate=lr_schedule(0)),
+                optimizer=Adam(lr=lr_schedule(0)),
                 metrics=['accuracy'])
 
     print('Using real-time data augmentation.')
@@ -956,12 +956,12 @@ log_dict['total_params'] = []
 log_dict['total_flops'] = []
 
 
-best_acc_index = history.history['val_accuracy'].index(max(history.history['val_accuracy']))
+best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
 log_dict['train_loss'].append(history.history['loss'][best_acc_index])
 log_dict['train_acc'].append(history.history['accuracy'][best_acc_index])
 log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
-log_dict['val_acc'].append(history.history['val_accuracy'][best_acc_index])
-validation_accuracy = max(history.history['val_accuracy'])
+log_dict['val_acc'].append(history.history['val_acc'][best_acc_index])
+validation_accuracy = max(history.history['val_acc'])
 
 log_dict['remaining_filters'] = []
 a,b = count_model_params_flops(model,True)
@@ -996,12 +996,12 @@ while validation_accuracy - max_val_acc >= -0.02 and count < 4 :
     a,b = count_model_params_flops(model,False)
 
 
-    validation_accuracy = max(history.history['val_accuracy'])
-    best_acc_index = history.history['val_accuracy'].index(max(history.history['val_accuracy']))
+    validation_accuracy = max(history.history['val_acc'])
+    best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
     log_dict['train_loss'].append(history.history['loss'][best_acc_index])
     log_dict['train_acc'].append(history.history['accuracy'][best_acc_index])
     log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
-    log_dict['val_acc'].append(history.history['val_accuracy'][best_acc_index])
+    log_dict['val_acc'].append(history.history['val_acc'][best_acc_index])
     log_dict['total_params'].append(a)
     log_dict['total_flops'].append(b)
     x = (my_get_weights_in_conv_layers(model,True))

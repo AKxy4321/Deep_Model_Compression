@@ -768,7 +768,7 @@ if choice == 'Y':
     model.compile(loss='categorical_crossentropy', optimizer=sgd,metrics=['accuracy'])
 
     weight_list_per_epoch = list()
-    data = np.load("/home/shabbeer/Research/BTP_Pruning/1.npz")
+    data = np.load("./1.npz")
     for i in range(13):
         weight_list_per_epoch.append(data['w_{}'.format(i+1)])
 
@@ -817,7 +817,7 @@ log_dict['total_params'].append(a)
 log_dict['total_flops'].append(b)
 
 log_df = pd.DataFrame(log_dict)
-log_df.to_csv('/home/shabbeer/Research/BTP_Pruning/2_HBP_OPT.csv')
+log_df.to_csv('./2_HBP_OPT.csv')
 
 #stop pruning if the accuracy drops by 5% from maximum accuracy ever obtained. 
 
@@ -868,9 +868,9 @@ while validation_accuracy - max_val_acc >= -0.02 :
     log_dict['total_params'].append(a)
     log_dict['total_flops'].append(b)
     log_df = pd.DataFrame(log_dict)
-    log_df.to_csv('/home/shabbeer/Research/BTP_Pruning/2_HBP_OPT.csv')
+    log_df.to_csv('./2_HBP_OPT.csv')
     print("VALIDATION ACCURACY AFTER {} ITERATIONS = {}".format(count+1,validation_accuracy))
     count+=1
 
 log_df = pd.DataFrame(log_dict)
-log_df.to_csv('/home/shabbeer/Research/BTP_Pruning/2_HBP_OPT.csv')
+log_df.to_csv('/2_HBP_OPT.csv')
