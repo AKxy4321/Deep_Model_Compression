@@ -205,7 +205,8 @@ def my_get_l1_norms_filters_per_epoch(weight_list_per_epoch):
         h , w , d = np.array(weight_list_per_epoch[index]).shape[1], np.array(weight_list_per_epoch[index]).shape[2] , np.array(weight_list_per_epoch[index]).shape[3]
 
 
-        l1_norms_filters_per_epoch.append(np.sum(np.abs(np.array(weight_list_per_epoch[index])).reshape(epochs,h*w*d,-1),axis=1))
+        l1_norms_per_epoch = np.sum(np.abs(weight_list_per_epoch[index]), axis=(1, 2, 3)).reshape(epochs, -1)
+        l1_norms_filters_per_epoch.append(l1_norms_per_epoch)
     return l1_norms_filters_per_epoch
 
 

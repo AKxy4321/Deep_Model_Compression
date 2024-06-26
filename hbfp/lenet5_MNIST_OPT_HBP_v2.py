@@ -579,7 +579,7 @@ while validation_accuracy - max_val_acc >= -0.01 and  count < 3:
     a,b = count_model_params_flops(model,False)
     print(a,b)
     
-    al+=history
+    # al+=history
     validation_accuracy = max(history.history['val_acc'])
     best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
     log_dict['train_loss'].append(history.history['loss'][best_acc_index])
