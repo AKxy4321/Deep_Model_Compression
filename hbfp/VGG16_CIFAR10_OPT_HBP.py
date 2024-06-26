@@ -528,7 +528,7 @@ class cifar10vgg:
 
         #optimization details
         sgd = optimizers.SGD(lr=learning_rate, decay=lr_decay, momentum=0.9, nesterov=True)
-        model.compile(loss='categorical_crossentropy', optimizer=sgd,metrics=['accuracy'])
+        model.compile(loss='categorical_crossentropy', optimizer=sgd,metrics=['acc'])
 
         gw = Get_Weights(self.first_time)
 
@@ -608,7 +608,7 @@ def train(model,epochs):
 
     #optimization details
     sgd = optimizers.SGD(lr=learning_rate, decay=lr_decay, momentum=0.9, nesterov=True)
-    model.compile(loss='categorical_crossentropy', optimizer=sgd,metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy', optimizer=sgd,metrics=['acc'])
 
     gw = Get_Weights(False)
 
@@ -732,7 +732,7 @@ def optimize(model,weight_list_per_epoch,epochs,percentage,first_time):
     print("INITIAL REGULARIZER VALUE ",my_get_regularizer_value(model,weight_list_per_epoch,percentage,first_time))
     model_loss = custom_loss(lmbda= 0.1 , regularizer_value=regularizer_value)
     sgd = optimizers.SGD(lr=learning_rate, decay=lr_decay, momentum=0.9, nesterov=True)
-    model.compile(loss=model_loss, optimizer=sgd,metrics=['accuracy'])
+    model.compile(loss=model_loss, optimizer=sgd,metrics=['acc'])
     
     history = model.fit_generator(datagen.flow(x_train, y_train,
                                         batch_size=batch_size),
@@ -765,7 +765,7 @@ if choice == 'Y':
     reduce_lr = keras.callbacks.LearningRateScheduler(lr_scheduler)
 
     sgd = optimizers.SGD(lr=learning_rate, decay=lr_decay, momentum=0.9, nesterov=True)
-    model.compile(loss='categorical_crossentropy', optimizer=sgd,metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy', optimizer=sgd,metrics=['acc'])
 
     weight_list_per_epoch = list()
     data = np.load("./1.npz")
@@ -819,9 +819,9 @@ log_dict['total_flops'].append(b)
 log_df = pd.DataFrame(log_dict)
 log_df.to_csv('./2_HBP_OPT.csv')
 
-#stop pruning if the accuracy drops by 5% from maximum accuracy ever obtained. 
+#stop pruning if the acc drops by 5% from maximum acc ever obtained. 
 
-print("Initial Validation Accuracy = {}".format(validation_accuracy) )
+print("Initial Validation acc = {}".format(validation_accuracy) )
 max_val_acc = validation_accuracy
 count = 0
 
@@ -869,7 +869,7 @@ while validation_accuracy - max_val_acc >= -0.02 :
     log_dict['total_flops'].append(b)
     log_df = pd.DataFrame(log_dict)
     log_df.to_csv('./2_HBP_OPT.csv')
-    print("VALIDATION ACCURACY AFTER {} ITERATIONS = {}".format(count+1,validation_accuracy))
+    print("VALIDATION acc AFTER {} ITERATIONS = {}".format(count+1,validation_accuracy))
     count+=1
 
 log_df = pd.DataFrame(log_dict)

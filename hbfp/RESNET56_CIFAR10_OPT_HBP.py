@@ -386,14 +386,14 @@ epochs = 200
 data_augmentation = True
 num_classes = 10
 
-# Subtracting pixel mean improves accuracy
+# Subtracting pixel mean improves acc
 subtract_pixel_mean = True
 
 # Model parameter
 # ----------------------------------------------------------------------------
 #           |      | 200-epoch | Orig Paper| 200-epoch | Orig Paper| sec/epoch
 # Model     |  n   | ResNet v1 | ResNet v1 | ResNet v2 | ResNet v2 | GTX1080Ti
-#           |v1(v2)| %Accuracy | %Accuracy | %Accuracy | %Accuracy | v1 (v2)
+#           |v1(v2)| %acc | %acc | %acc | %acc | v1 (v2)
 # ----------------------------------------------------------------------------
 # ResNet20  | 3 (2)| 92.16     | 91.25     | -----     | -----     | 35 (---)
 # ResNet32  | 5(NA)| 92.46     | 92.49     | NA        | NA        | 50 ( NA)
@@ -691,13 +691,13 @@ else:
 
 model.compile(loss='categorical_crossentropy',
               optimizer=Adam(lr=lr_schedule(0)),
-              metrics=['accuracy'])
+              metrics=['acc'])
 model = load_model('./before_resnet.h5')
 a = model.evaluate(x_test,y_test)
 print(a)
 model.compile(loss='categorical_crossentropy',
               optimizer=Adam(lr=lr_schedule(0)),
-              metrics=['accuracy'])
+              metrics=['acc'])
 
 
 Prepare model model saving directory.
@@ -786,7 +786,7 @@ def train(model,epochs):
     callbacks = [lr_reducer, lr_scheduler,gw]
     model.compile(loss='categorical_crossentropy',
                 optimizer=Adam(lr=lr_schedule(0)),
-                metrics=['accuracy'])
+                metrics=['acc'])
 
     print('Using real-time data augmentation.')
     # This will do preprocessing and realtime data augmentation:
@@ -888,7 +888,7 @@ def optimize(model,weight_list_per_epoch,epochs,percentage):
 
     model.compile(loss=model_loss,
                 optimizer=Adam(lr=lr_schedule(0)),
-                metrics=['accuracy'])
+                metrics=['acc'])
 
     print('Using real-time data augmentation.')
     # This will do preprocessing and realtime data augmentation:
@@ -958,7 +958,7 @@ log_dict['total_flops'] = []
 
 best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
 log_dict['train_loss'].append(history.history['loss'][best_acc_index])
-log_dict['train_acc'].append(history.history['accuracy'][best_acc_index])
+log_dict['train_acc'].append(history.history['acc'][best_acc_index])
 log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
 log_dict['val_acc'].append(history.history['val_acc'][best_acc_index])
 validation_accuracy = max(history.history['val_acc'])
@@ -975,7 +975,7 @@ log_dict['remaining_filters'].append(remaining_filters)
 
 log_df = pd.DataFrame(log_dict)
 # log_df.to_csv('/home/shabbeer/Research/BTP_Pruning/resnet_OPT_4.csv')
-print("Initial Validation Accuracy = {}".format(validation_accuracy) )
+print("Initial Validation acc = {}".format(validation_accuracy) )
 max_val_acc = validation_accuracy
 count = 0
 model.save('/home/shabbeer/Research/BTP_Pruning/before_resnet.h5')
@@ -999,7 +999,7 @@ while validation_accuracy - max_val_acc >= -0.02 and count < 4 :
     validation_accuracy = max(history.history['val_acc'])
     best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
     log_dict['train_loss'].append(history.history['loss'][best_acc_index])
-    log_dict['train_acc'].append(history.history['accuracy'][best_acc_index])
+    log_dict['train_acc'].append(history.history['acc'][best_acc_index])
     log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
     log_dict['val_acc'].append(history.history['val_acc'][best_acc_index])
     log_dict['total_params'].append(a)
@@ -1013,6 +1013,6 @@ while validation_accuracy - max_val_acc >= -0.02 and count < 4 :
     log_df = pd.DataFrame(log_dict)
     log_df.to_csv('/home/shabbeer/Research/BTP_Pruning/resnet_OPT_4.csv')
 
-    print("VALIDATION ACCURACY AFTER {} ITERATIONS = {}".format(count+1,validation_accuracy))
+    print("VALIDATION acc AFTER {} ITERATIONS = {}".format(count+1,validation_accuracy))
     count+=1
     model.save('/home/shabbeer/Research/BTP_Pruning/after_resnet.h5')
