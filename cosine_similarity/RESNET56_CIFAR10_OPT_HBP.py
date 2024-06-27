@@ -693,7 +693,7 @@ else:
 model.compile(loss='categorical_crossentropy',
               optimizer=Adam(lr=lr_schedule(0)),
               metrics=['acc'])
-model = load_model('./before_resnet.h5')
+# model = load_model('./before_resnet.h5')
 a = model.evaluate(x_test,y_test)
 print(a)
 model.compile(loss='categorical_crossentropy',

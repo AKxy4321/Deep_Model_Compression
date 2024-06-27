@@ -408,7 +408,7 @@ n = 9
 
 # Model version
 # Orig paper: version = 1 (ResNet v1), Improved ResNet: version = 2 (ResNet v2)
-version = 1
+version = 2
 
 # Computed depth from supplied model parameter n
 if version == 1:
@@ -693,7 +693,7 @@ else:
 model.compile(loss='categorical_crossentropy',
               optimizer=Adam(lr=lr_schedule(0)),
               metrics=['acc'])
-model = load_model('./before_resnet.h5')
+# model = load_model('./before_resnet.h5')
 a = model.evaluate(x_test,y_test)
 print(a)
 model.compile(loss='categorical_crossentropy',
