@@ -49,6 +49,7 @@ import os
 from kerassurgeon import identify
 from kerassurgeon.operations import delete_channels,delete_layer
 from kerassurgeon import Surgeon
+from sklearn.metrics.pairwise import cosine_similarity
 
 def my_get_all_conv_layers(model , first_time):
 
@@ -186,31 +187,33 @@ def my_get_weights_in_conv_layers(model,first_time):
           weights.append(model.layers[i].get_weights()[0])
     return weights
 
-def my_get_l1_norms_filters_per_epoch(weight_list_per_epoch):
-
+def my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch):
     '''
     Arguments:
-        List
+        weight_list_per_epoch: List of weights for each epoch
     Return:
-        Number of parmaters, Number of Flops
+        cosine_similarities_filters_per_epoch: List of cosine similarities for filters per epoch
     '''
-
-    # weight_list_per_epoch = my_get_weights_in_conv_layers(model,first_time)
-    l1_norms_filters_per_epoch = list()
-
+    cosine_similarities_filters_per_epoch = []
 
     for index in range(len(weight_list_per_epoch)):
+        epoch_weights = np.array(weight_list_per_epoch[index])
+        epochs = epoch_weights.shape[0]
+        h, w, d = epoch_weights.shape[1], epoch_weights.shape[2], epoch_weights.shape[3]
 
-        epochs = np.array(weight_list_per_epoch[index]).shape[0]
-        h , w , d = np.array(weight_list_per_epoch[index]).shape[1], np.array(weight_list_per_epoch[index]).shape[2] , np.array(weight_list_per_epoch[index]).shape[3]
+        cosine_similarities_per_epoch = []
 
+        for epoch in range(epochs):
+            filters = epoch_weights[epoch].reshape(epoch_weights[epoch].shape[0], -1) 
+            cosine_sim_matrix = cosine_similarity(filters)  
+            sum_cosine_similarities = np.sum(cosine_sim_matrix, axis=1) 
+            cosine_similarities_per_epoch.append(sum_cosine_similarities)
+        
+        cosine_similarities_filters_per_epoch.append(cosine_similarities_per_epoch)
+    
+    return np.array(cosine_similarities_filters_per_epoch)  
 
-        l1_norms_per_epoch = np.sum(np.abs(weight_list_per_epoch[index]), axis=(1, 2, 3)).reshape(epochs, -1)
-        l1_norms_filters_per_epoch.append(l1_norms_per_epoch)
-    return l1_norms_filters_per_epoch
-
-
-def my_in_conv_layers_get_sum_of_l1_norms_sorted_indices(weight_list_per_epoch):
+def my_in_conv_layers_get_sum_of_cosine_similarity_sorted_indices(weight_list_per_epoch):
     '''
         Arguments:
             weight List
@@ -219,15 +222,15 @@ def my_in_conv_layers_get_sum_of_l1_norms_sorted_indices(weight_list_per_epoch):
     '''
     layer_wise_filter_sorted_indices = list()
     layer_wise_filter_sorted_values = list()
-    l1_norms_filters_per_epoch = my_get_l1_norms_filters_per_epoch(weight_list_per_epoch)
-    sum_l1_norms = list()
+    cosine_similarity_filters_per_epoch = my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch)
+    sum_cosine_norms = list()
 
-    for i in l1_norms_filters_per_epoch:
-        sum_l1_norms.append(np.sum(i,axis=0))
+    for i in cosine_similarity_filters_per_epoch:
+        sum_cosine_norms.append(np.sum(i,axis=0))
 
     layer_wise_filter_sorted_indices = list()
 
-    for i in sum_l1_norms:
+    for i in sum_cosine_norms:
         a = pd.Series(i).sort_values().index
         layer_wise_filter_sorted_indices.append(a.tolist())
     return layer_wise_filter_sorted_indices
@@ -240,18 +243,18 @@ def my_get_percent_prune_filter_indices(layer_wise_filter_sorted_indices,percent
         prune_filter_indices.append(int(len(layer_wise_filter_sorted_indices[i]) * (percentage/100)))
     return prune_filter_indices
 
-def my_get_distance_matrix(l1_norm_matrix):
+def my_get_distance_matrix(cosine_similarity_matrix):
     distance_matrix = []
-    for i,v1 in enumerate(l1_norm_matrix):
+    for i,v1 in enumerate(cosine_similarity_matrix):
         distance_matrix.append([])
-        for v2 in l1_norm_matrix:
+        for v2 in cosine_similarity_matrix:
             distance_matrix[i].append(np.sum(np.abs((v1-v2))))
     return np.array(distance_matrix)
 
-def my_get_distance_matrix_list(l1_norm_matrix_list):
+def my_get_distance_matrix_list(cosine_similarity_matrix_list):
     distance_matrix_list = []
-    for l1_norm_matrix in l1_norm_matrix_list:
-        distance_matrix_list.append(my_get_distance_matrix(l1_norm_matrix.T))
+    for cosine_similarity_matrix in cosine_similarity_matrix_list:
+        distance_matrix_list.append(my_get_distance_matrix(cosine_similarity_matrix.T))
     return distance_matrix_list
 
 
@@ -280,15 +283,15 @@ def my_get_episodes_for_all_layers(distance_matrix_list,percentage):
     return all_episodes
 
 
-def my_get_filter_pruning_indices(episodes_for_all_layers,l1_norm_matrix_list):
+def my_get_filter_pruning_indices(episodes_for_all_layers,cosine_similarity_matrix_list):
     filter_pruning_indices = list()
     for layer_index,episode_layer in enumerate(episodes_for_all_layers):
         a = set()
-        sum_l1_norms = np.sum(l1_norm_matrix_list[layer_index],axis=0,keepdims=True)
+        sum_cosine_norms = np.sum(cosine_similarity_matrix_list[layer_index],axis=0,keepdims=True)
 
         for episode in episode_layer:
-            ep1 = sum_l1_norms.T[episode[0]]
-            ep2 = sum_l1_norms.T[episode[1]]
+            ep1 = sum_cosine_norms.T[episode[0]]
+            ep2 = sum_cosine_norms.T[episode[1]]
             if ep1 >= ep2:
                 a.add(episode[0])
             else:
@@ -301,10 +304,10 @@ def my_get_filter_pruning_indices(episodes_for_all_layers,l1_norm_matrix_list):
 
 
 def my_delete_filters(model,weight_list_per_epoch,percentage,first_time,number):
-    l1_norms = my_get_l1_norms_filters_per_epoch(weight_list_per_epoch)
-    distance_matrix_list = my_get_distance_matrix_list(l1_norms)
+    cosine_similarity = my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch)
+    distance_matrix_list = my_get_distance_matrix_list(cosine_similarity)
     episodes_for_all_layers = my_get_episodes_for_all_layers(distance_matrix_list,percentage)
-    filter_pruning_indices = my_get_filter_pruning_indices(episodes_for_all_layers,l1_norms)
+    filter_pruning_indices = my_get_filter_pruning_indices(episodes_for_all_layers,cosine_similarity)
     all_conv_layers = my_get_all_conv_layers(model,first_time)
     surgeon = Surgeon(model)
     for index,value in enumerate(all_conv_layers):
@@ -321,10 +324,10 @@ def my_delete_filters(model,weight_list_per_epoch,percentage,first_time,number):
     return model_new
 
 def my_delete_from_block_1(model,weight_list_per_epoch):
-  l1_norms = my_get_l1_norms_filters_per_epoch(weight_list_per_epoch)
-  distance_matrix_list = my_get_distance_matrix_list(l1_norms)
+  cosine_similarity = my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch)
+  distance_matrix_list = my_get_distance_matrix_list(cosine_similarity)
   episodes_for_all_layers = my_get_episodes_for_all_layers(distance_matrix_list,90)
-  filter_pruning_indices = my_get_filter_pruning_indices(episodes_for_all_layers,l1_norms)[:19]
+  filter_pruning_indices = my_get_filter_pruning_indices(episodes_for_all_layers,cosine_similarity)[:19]
   all_conv_layers = my_get_all_conv_layers(model,True)[:19]
   surgeon = Surgeon(model)
   for index,value in enumerate(all_conv_layers):
@@ -337,10 +340,10 @@ def my_delete_from_block_1(model,weight_list_per_epoch):
 
 
 def my_delete_from_block_2(model,weight_list_per_epoch):
-  l1_norms = my_get_l1_norms_filters_per_epoch(weight_list_per_epoch)
-  distance_matrix_list = my_get_distance_matrix_list(l1_norms)
+  cosine_similarity = my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch)
+  distance_matrix_list = my_get_distance_matrix_list(cosine_similarity)
   episodes_for_all_layers = my_get_episodes_for_all_layers(distance_matrix_list,90)
-  filter_pruning_indices = my_get_filter_pruning_indices(episodes_for_all_layers,l1_norms)[19:38]
+  filter_pruning_indices = my_get_filter_pruning_indices(episodes_for_all_layers,cosine_similarity)[19:38]
   all_conv_layers = my_get_all_conv_layers(model,True)[19:38]
   surgeon = Surgeon(model)
   for index,value in enumerate(all_conv_layers):
@@ -353,10 +356,10 @@ def my_delete_from_block_2(model,weight_list_per_epoch):
 
 
 def my_delete_from_block_3(model,weight_list_per_epoch):
-  l1_norms = my_get_l1_norms_filters_per_epoch(weight_list_per_epoch)
-  distance_matrix_list = my_get_distance_matrix_list(l1_norms)
+  cosine_similarity = my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch)
+  distance_matrix_list = my_get_distance_matrix_list(cosine_similarity)
   episodes_for_all_layers = my_get_episodes_for_all_layers(distance_matrix_list,90)
-  filter_pruning_indices = my_get_filter_pruning_indices(episodes_for_all_layers,l1_norms)[38:]
+  filter_pruning_indices = my_get_filter_pruning_indices(episodes_for_all_layers,cosine_similarity)[38:]
   all_conv_layers = my_get_all_conv_layers(model,True)[38:]
   surgeon = Surgeon(model)
   for index,value in enumerate(all_conv_layers):
@@ -860,31 +863,31 @@ def custom_loss(lmbda , regularizer_value):
     return K.categorical_crossentropy(y_true ,y_pred) + lmbda * regularizer_value
   return loss
 
-def my_get_l1_norms_filters(model,first_time):
+def my_get_cosine_similarity_filters(model,first_time):
     conv_layers = my_get_all_conv_layers(model,first_time)
-    l1_norms = list()
+    cosine_similarity = list()
     for index,layer_index in enumerate(conv_layers):
-        l1_norms.append([])
+        cosine_similarity.append([])
         # print(layer_index)
         weights = model.layers[layer_index].get_weights()[0]
         num_filters = len(weights[0,0,0,:])
         for i in range(num_filters):
             weights_sum = np.sum(weights[:,:,:,i])
-            l1_norms[index].append(weights_sum)
-    return l1_norms
+            cosine_similarity[index].append(weights_sum)
+    return cosine_similarity
 
 
 def my_get_regularizer_value(model,weight_list_per_epoch,percentage,first_time):
-    l1_norms_per_epoch = my_get_l1_norms_filters_per_epoch(weight_list_per_epoch)
-    distance_matrix_list = my_get_distance_matrix_list(l1_norms_per_epoch)
+    cosine_similarity_per_epoch = my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch)
+    distance_matrix_list = my_get_distance_matrix_list(cosine_similarity_per_epoch)
     episodes_for_all_layers = my_get_episodes_for_all_layers(distance_matrix_list,percentage)
-    l1_norms = my_get_l1_norms_filters(model,first_time)
+    cosine_similarity = my_get_cosine_similarity_filters(model,first_time)
     print(episodes_for_all_layers)
     regularizer_value = 0
     for layer_index,layer in enumerate(episodes_for_all_layers):
         for episode in layer:
             # print(episode[1],episode[0])
-            regularizer_value += abs(l1_norms[layer_index][episode[1]] - l1_norms[layer_index][episode[0]])
+            regularizer_value += abs(cosine_similarity[layer_index][episode[1]] - cosine_similarity[layer_index][episode[0]])
     regularizer_value = np.exp(-0.001*(regularizer_value))
     return regularizer_value
 
