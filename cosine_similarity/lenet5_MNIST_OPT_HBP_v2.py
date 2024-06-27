@@ -28,6 +28,7 @@ from kerassurgeon import identify
 from kerassurgeon.operations import delete_channels,delete_layer
 from kerassurgeon import Surgeon
 from sklearn.metrics.pairwise import cosine_similarity
+import os
 
 def my_get_all_conv_layers(model , first_time):
 
@@ -634,5 +635,5 @@ print("Final Validation acc = ",(max(history.history['val_acc'])*100))
 log_df = pd.DataFrame(log_dict)
 log_df
 
-log_df.to_csv('./lenet5_2_results.csv')
+log_df.to_csv(os.path.join('.', 'results', 'lenet5_2.csv'))
 

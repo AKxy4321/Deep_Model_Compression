@@ -975,11 +975,10 @@ for i in x:
 log_dict['remaining_filters'].append(remaining_filters)
 
 log_df = pd.DataFrame(log_dict)
-# log_df.to_csv('/home/shabbeer/Research/BTP_Pruning/resnet_OPT_4.csv')
 print("Initial Validation acc = {}".format(validation_accuracy) )
 max_val_acc = validation_accuracy
 count = 0
-model.save('/home/shabbeer/Research/BTP_Pruning/before_resnet.h5')
+model.save(os.path.join('.', 'models', 'before_resnet.h5'))
 while validation_accuracy - max_val_acc >= -0.02 and count < 4 :
 
     print("ITERATION {} ".format(count+1))
@@ -1012,8 +1011,8 @@ while validation_accuracy - max_val_acc >= -0.02 and count < 4 :
     log_dict['remaining_filters'].append(remaining_filters)
 
     log_df = pd.DataFrame(log_dict)
-    log_df.to_csv('/home/shabbeer/Research/BTP_Pruning/resnet_OPT_4.csv')
+    log_df.to_csv(os.path.join('.', 'results', 'resnet56_2.csv'))
 
     print("VALIDATION acc AFTER {} ITERATIONS = {}".format(count+1,validation_accuracy))
     count+=1
-    model.save('/home/shabbeer/Research/BTP_Pruning/after_resnet.h5')
+    model.save(os.path.join('.', 'models', 'after_resnet.h5'))
