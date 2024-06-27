@@ -34,6 +34,7 @@ from sklearn import preprocessing
 from kerassurgeon import identify 
 from kerassurgeon.operations import delete_channels,delete_layer
 from kerassurgeon import Surgeon
+import os
 
 def my_get_all_conv_layers(model , first_time):
 
@@ -381,7 +382,7 @@ class cifar10vgg:
         else:
             #change
 
-            self.model.load_weights('/home/shabbeer/Research/BTP_Pruning/1_best_vgg16_cifar10.h5')
+            self.model.load_weights(os.path.join('.', 'models', 'vgg16_cifar10.h5'))
 
 
     def build_model(self):
@@ -790,7 +791,7 @@ elif choice == 'N':
     my_vgg = cifar10vgg(first_time=True,epochs=250)
     model, history ,weight_list_per_epoch= my_vgg.model, my_vgg.history, my_vgg.weight_list_per_epoch
 
-    model.save_weights('./3_best_vgg16_cifar10.h5')
+    model.save_weights(os.path.join('.', 'models', 'vgg16_cifar10.h5'))
     #save the weights of training process
     np.savez("./3.npz"
             ,w_1=weight_list_per_epoch[0],
