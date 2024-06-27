@@ -29,6 +29,9 @@ from keras import regularizers
 from keras.callbacks import ModelCheckpoint
 from sklearn import preprocessing
 
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+from scipy.stats import pearsonr
 
 # !pip install kerassurgeon
 from kerassurgeon import identify 
@@ -169,28 +172,36 @@ def my_get_weights_in_conv_layers(model,first_time):
           weights.append(model.layers[i].get_weights()[0])  
     return weights
 
-def my_get_l1_norms_filters_per_epoch(weight_list_per_epoch):
+def my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch):
 
     '''
     Arguments:
-        List
+        weight_list_per_epoch: List of weights for each epoch
     Return:
-        Number of parmaters, Number of Flops
+        cosine_similarities_filters_per_epoch: List of cosine similarities for filters per epoch
     '''
     
     # weight_list_per_epoch = my_get_weights_in_conv_layers(model,first_time)
-    l1_norms_filters_per_epoch = list()
+    cosine_similarities_filters_per_epoch = list()
     
 
     for index in range(len(weight_list_per_epoch)):
-
+        epoch_weights = np.array(weight_list_per_epoch[index])
         epochs = np.array(weight_list_per_epoch[index]).shape[0]
-        h , w , d = np.array(weight_list_per_epoch[index]).shape[1], np.array(weight_list_per_epoch[index]).shape[2] , np.array(weight_list_per_epoch[index]).shape[3]
-
-
-        l1_norms_per_epoch = np.sum(np.abs(weight_list_per_epoch[index]), axis=(1, 2, 3)).reshape(epochs, -1)
-        l1_norms_filters_per_epoch.append(l1_norms_per_epoch)
-    return l1_norms_filters_per_epoch
+        h , w , d = epoch_weights.shape[1],epoch_weights.shape[2] , epoch_weights.shape[3]
+        
+        cosine_similarities_per_epoch=[]
+        
+        for epoch in range(epochs):
+            filters=epoch_weights[epoch].reshape(epoch_weights[epoch].shape[0],-1)
+            cosine_sim_matrix=cosine_similarity(filters)
+            sum_cosine_similarities =np.sum(cosine_sim_matrix,axis=1)
+            cosine_similarities_per_epoch.append(sum_cosine_similarities)
+            
+        cosine_similarities_filters_per_epoch.append(cosine_similarities_per_epoch)
+        
+            
+    return np.array(cosine_similarities_filters_per_epoch)
 
 def my_in_conv_layers_get_sum_of_l1_norms_sorted_indices(weight_list_per_epoch):
     '''
@@ -202,7 +213,7 @@ def my_in_conv_layers_get_sum_of_l1_norms_sorted_indices(weight_list_per_epoch):
     '''
     layer_wise_filter_sorted_indices = list()
     layer_wise_filter_sorted_values = list()
-    l1_norms_filters_per_epoch = my_get_l1_norms_filters_per_epoch(weight_list_per_epoch)
+    l1_norms_filters_per_epoch = my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch)
     sum_l1_norms = list()
     
     for i in l1_norms_filters_per_epoch:
@@ -336,7 +347,7 @@ def my_delete_filters(model,weight_list_per_epoch,percentage,first_time):
         model_new:input model after pruning
 
     """
-    l1_norms = my_get_l1_norms_filters_per_epoch(weight_list_per_epoch)
+    l1_norms = my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch)
     distance_matrix_list = my_get_distance_matrix_list(l1_norms)
     episodes_for_all_layers = my_get_episodes_for_all_layers(distance_matrix_list,percentage)
     filter_pruning_indices = my_get_filter_pruning_indices(episodes_for_all_layers,l1_norms)
@@ -666,7 +677,7 @@ def my_get_regularizer_value(model,weight_list_per_epoch,percentage,first_time):
     Return:
         regularizer_value
     """
-    l1_norms_per_epoch = my_get_l1_norms_filters_per_epoch(weight_list_per_epoch)
+    l1_norms_per_epoch = my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch)
     distance_matrix_list = my_get_distance_matrix_list(l1_norms_per_epoch)
     episodes_for_all_layers = my_get_episodes_for_all_layers(distance_matrix_list,percentage)
     l1_norms = my_get_l1_norms_filters(model,first_time)
