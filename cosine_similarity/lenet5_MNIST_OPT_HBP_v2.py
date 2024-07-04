@@ -428,6 +428,7 @@ def train(model,epochs,first_time):
 model,history,weight_list_per_epoch = train(model,10,True)
 initial_flops = count_model_params_flops(model,True)[1]
 log_dict = dict()
+log_dict['epoch'] = []
 log_dict['train_loss'] = []
 log_dict['train_acc'] = []
 log_dict['val_loss'] = []
@@ -438,6 +439,7 @@ log_dict['filters_in_conv1'] = []
 log_dict['filters_in_conv2'] = []
 
 best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
+log_dict['epoch'].append(len(history.history['val_acc']) + 1)
 log_dict['train_loss'].append(history.history['loss'][best_acc_index])
 log_dict['train_acc'].append(history.history['acc'][best_acc_index])
 log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
@@ -447,6 +449,7 @@ log_dict['total_params'].append(a)
 log_dict['total_flops'].append(b)
 log_dict['filters_in_conv1'].append(model.layers[0].get_weights()[0].shape[-1])
 log_dict['filters_in_conv2'].append(model.layers[2].get_weights()[0].shape[-1])
+
 al = history
 
 from keras import backend as K
@@ -586,6 +589,7 @@ while validation_accuracy - max_val_acc >= -0.01 and  count < 3:
     # al+=history
     validation_accuracy = max(history.history['val_acc'])
     best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
+    log_dict['epoch'].append(len(history.history['val_acc']) + 1)
     log_dict['train_loss'].append(history.history['loss'][best_acc_index])
     log_dict['train_acc'].append(history.history['acc'][best_acc_index])
     log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
@@ -621,6 +625,7 @@ model.summary()
 model,history,weight_list_per_epoch = train(model,60,False)
 
 best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
+log_dict['epoch'].append(len(history.history['val_acc']) + 1)
 log_dict['train_loss'].append(history.history['loss'][best_acc_index])
 log_dict['train_acc'].append(history.history['acc'][best_acc_index])
 log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
