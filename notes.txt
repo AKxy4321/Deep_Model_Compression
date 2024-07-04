@@ -1,0 +1,53 @@
+Code Analysis - 
+
+my_get_all_conv_layers - List of Indices containing convolution layers
+
+my_get_all_dense_layers - List of Indices containing fully connected layers
+
+my_get_weights_in_conv_layers - List containing weight tensors of each convolutional layer 
+
+my_get_cosine_similarity_filters_per_epoch - List of cosine similarities of each filters
+
+my_in_conv_layers_get_sum_of_l1_norms_sorted_indices - List of sorted indices wrt cosine similarity 
+
+my_get_percent_prune_filter_indices - indices of filter to be pruned
+
+my_get_distance_matrix - get manhattan distance between each matrix
+
+my_get_distance_matrix_list - List of distance matrix
+
+my_get_episodes - List of filter indices  (episodes = ?)
+
+my_get_episodes_for_all_layers - All selected filter pairs
+
+my_get_filter_pruning_indices - List of filter indices to be pruned
+
+my_delete_filters - prune selected filters
+
+count_conv_params_flops - flops of conv layers
+
+count_dense_params_flops - flops of dense layers
+
+count_model_params_flops - model flops
+
+after this function, model is defined with the layers 
+
+train - train starting model or retrain pruned model - also provides weight list of the model
+
+custom_loss - categorical cross entropy + lambda x regulariser (optimise the model)
+
+my_get_l1_norms_filters - returns l1 norm normally, modified to return cosine similarities
+
+my_get_regularizer_value - give regulariser to help in optimisation
+
+optimise - optimise model based on regulariser
+
+loop - base condition = validation_accuracy - max_val_acc >= -0.01 and count < 3
+
+when count < 1 then it tries to optimise and prune 50% of filters after that it tries to prune 30% of filters 
+
+print model summary, and try to optimise 40% of filters for 20 epochs
+
+then prune the model again, print last summary and retrain model for 60 epochs
+
+save results in csv
