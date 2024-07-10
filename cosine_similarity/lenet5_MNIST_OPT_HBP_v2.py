@@ -174,7 +174,7 @@ def my_get_distance_matrix_list(l1_norm_matrix_list):
 
 
 
-def my_get_episodes(distance_matrix,percentage):
+def my_get_episodes(distance_matrix,percentage):      # episodes - filter selection at each iteration
     """
     Arguments:
         distance_matrix:
@@ -564,7 +564,7 @@ count = 0
 all_models = list()
 a,b = count_model_params_flops(model,False)
 print(a,b)
-while validation_accuracy - max_val_acc >= -0.01 and  count < 3:
+while validation_accuracy - max_val_acc >= -0.01:# and  count < 3:
 
 
     print("ITERATION {} ".format(count+1))
@@ -578,9 +578,14 @@ while validation_accuracy - max_val_acc >= -0.01 and  count < 3:
         model = my_delete_filters(model,weight_list_per_epoch,50,True)
         model,history,weight_list_per_epoch = train(model,10,False)
    
-    else:
+    elif count < 5:
         optimize(model,weight_list_per_epoch,10,30,False)
         model = my_delete_filters(model,weight_list_per_epoch,30,False)
+        model,history,weight_list_per_epoch = train(model,20,False)
+
+    else:
+        optimize(model,weight_list_per_epoch,10,10,False)
+        model = my_delete_filters(model,weight_list_per_epoch,10,False)
         model,history,weight_list_per_epoch = train(model,20,False)
 
     a,b = count_model_params_flops(model,False)
