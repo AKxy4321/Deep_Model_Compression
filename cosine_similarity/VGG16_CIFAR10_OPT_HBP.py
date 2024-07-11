@@ -344,8 +344,8 @@ def my_delete_filters(model,weight_list_per_epoch,percentage,first_time):
     all_conv_layers = my_get_all_conv_layers(model,first_time)
 
     surgeon = Surgeon(model)
-    for index,value in enumerate(all_conv_layers):
-        # print(index,value,filter_pruning_indices[index])
+    for index, value in enumerate(all_conv_layers):
+        print(index,value,filter_pruning_indices[index])
         surgeon.add_job('delete_channels',model.layers[value],channels = filter_pruning_indices[index])
 
     model_new = surgeon.operate()
@@ -841,7 +841,7 @@ while validation_accuracy - max_val_acc >= -0.02 :
 
     if count < 1:
         print('OPTIMIZATION')
-        model,_ = optimize(model,weight_list_per_epoch,10,10,True)
+        model,_ = optimize(model,weight_list_per_epoch,0,10,True)
         model = my_delete_filters(model,weight_list_per_epoch,10,True)
         print('FINETUNING')
         model,history,weight_list_per_epoch = train(model,10)
