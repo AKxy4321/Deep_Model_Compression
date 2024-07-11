@@ -345,7 +345,7 @@ def my_delete_filters(model,weight_list_per_epoch,percentage,first_time):
 
     surgeon = Surgeon(model)
     for index,value in enumerate(all_conv_layers):
-        print(index,value,filter_pruning_indices[index])
+        # print(index,value,filter_pruning_indices[index])
         surgeon.add_job('delete_channels',model.layers[value],channels = filter_pruning_indices[index])
 
     model_new = surgeon.operate()
