@@ -494,7 +494,7 @@ class cifar10vgg:
         #training parameters
         batch_size = 128
         maxepoches = 10
-        learning_rate = 0.1
+        learning_rate = 0.01
         lr_decay = 1e-6
         lr_drop = 20
         # The data, shuffled and split between train and test sets:
@@ -789,7 +789,7 @@ if choice == 'Y':
 
 elif choice == 'N':
     # train for first time
-    my_vgg = cifar10vgg(first_time=True,epochs=250)
+    my_vgg = cifar10vgg(first_time=True,epochs=50)
     model, history ,weight_list_per_epoch= my_vgg.model, my_vgg.history, my_vgg.weight_list_per_epoch
 
     model.save_weights(os.path.join('.', 'models', 'cifar10vgg.h5'))
