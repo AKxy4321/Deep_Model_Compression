@@ -820,7 +820,7 @@ log_dict['total_params'].append(a)
 log_dict['total_flops'].append(b)
 
 log_df = pd.DataFrame(log_dict)
-log_df.to_csv('./2_HBP_OPT.csv')
+log_df.to_csv(os.path.join('.', 'results', 'VGG16.csv'))
 
 #stop pruning if the acc drops by 5% from maximum acc ever obtained. 
 
@@ -871,9 +871,9 @@ while validation_accuracy - max_val_acc >= -0.02 :
     log_dict['total_params'].append(a)
     log_dict['total_flops'].append(b)
     log_df = pd.DataFrame(log_dict)
-    log_df.to_csv('./2_HBP_OPT.csv')
+    log_df.to_csv(os.path.join('.', 'results', 'VGG16_2.csv'))
     print("VALIDATION acc AFTER {} ITERATIONS = {}".format(count+1,validation_accuracy))
     count+=1
 
 log_df = pd.DataFrame(log_dict)
-log_df.to_csv('/2_HBP_OPT.csv')
+log_df.to_csv(os.path.join('.', 'results', 'VGG16_3.csv'))
