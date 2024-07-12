@@ -793,8 +793,9 @@ elif choice == 'N':
     model, history ,weight_list_per_epoch= my_vgg.model, my_vgg.history, my_vgg.weight_list_per_epoch
 
     model.save_weights(os.path.join('.', 'models', 'cifar10vgg.h5'))
+    print("Model is Saved")
     #save the weights of training process
-    np.savez("./3.npz"
+    np.savez("./1.npz"
             ,w_1=weight_list_per_epoch[0],
             w_2=weight_list_per_epoch[1],
             w_3=weight_list_per_epoch[2],
@@ -808,6 +809,7 @@ elif choice == 'N':
             w_11=weight_list_per_epoch[10],
             w_12=weight_list_per_epoch[11],
             w_13=weight_list_per_epoch[12])
+    print("Weights are Saved")
     best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
     log_dict['train_loss'].append(history.history['loss'][best_acc_index])
     log_dict['train_acc'].append(history.history['acc'][best_acc_index])
