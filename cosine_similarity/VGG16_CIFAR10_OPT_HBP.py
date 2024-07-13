@@ -777,8 +777,9 @@ if choice == 'Y':
 
     ###############################################################
     # Training Model in Parts
-    model = train(model, 50)
-    model.save_weights(os.path.join('.', 'models', 'cifar10vgg.h5'))
+    model = train(model, 1)
+    weight_list_per_epoch = my_vgg.weight_list_per_epoch
+    my_vgg.model.save_weights(os.path.join('.', 'models', 'cifar10vgg.h5'))
     print("Model is Saved")
     #save the weights of training process
     np.savez(os.path.join('.', 'models', 'vgg_weights.npz')
