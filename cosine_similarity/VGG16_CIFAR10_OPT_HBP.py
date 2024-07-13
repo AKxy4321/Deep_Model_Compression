@@ -777,24 +777,24 @@ if choice == 'Y':
 
     ###############################################################
     # Training Model in Parts
-    model = train(model, 1)
+    model, history ,train_weight_list_per_epoch = train(model, 1)
     my_vgg.model.save_weights(os.path.join('.', 'models', 'cifar10vgg.h5'))
     print("Model is Saved")
     #save the weights of training process
     np.savez(os.path.join('.', 'models', 'vgg_weights.npz')
-            ,w_1=my_vgg.weight_list_per_epoch[0],
-            w_2=my_vgg.weight_list_per_epoch[1],
-            w_3=my_vgg.weight_list_per_epoch[2],
-            w_4=my_vgg.weight_list_per_epoch[3],
-            w_5=my_vgg.weight_list_per_epoch[4],
-            w_6=my_vgg.weight_list_per_epoch[5],
-            w_7=my_vgg.weight_list_per_epoch[6],
-            w_8=my_vgg.weight_list_per_epoch[7],
-            w_9=my_vgg.weight_list_per_epoch[8],
-            w_10=my_vgg.weight_list_per_epoch[9],
-            w_11=my_vgg.weight_list_per_epoch[10],
-            w_12=my_vgg.weight_list_per_epoch[11],
-            w_13=my_vgg.weight_list_per_epoch[12])
+            ,w_1=train_weight_list_per_epoch[0],
+            w_2=train_weight_list_per_epoch[1],
+            w_3=train_weight_list_per_epoch[2],
+            w_4=train_weight_list_per_epoch[3],
+            w_5=train_weight_list_per_epoch[4],
+            w_6=train_weight_list_per_epoch[5],
+            w_7=train_weight_list_per_epoch[6],
+            w_8=train_weight_list_per_epoch[7],
+            w_9=train_weight_list_per_epoch[8],
+            w_10=train_weight_list_per_epoch[9],
+            w_11=train_weight_list_per_epoch[10],
+            w_12=train_weight_list_per_epoch[11],
+            w_13=train_weight_list_per_epoch[12])
     print("Weights are Saved")
 
     ###############################################################
