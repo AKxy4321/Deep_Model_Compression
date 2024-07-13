@@ -830,36 +830,18 @@ print("Initial Validation acc = {}".format(validation_accuracy) )
 max_val_acc = validation_accuracy
 count = 0
 
-while validation_accuracy - max_val_acc >= -0.02 :
-
-# while count <= 2  :
-
-
+while validation_accuracy - max_val_acc >= -0.01 :
     print("ITERATION {} ".format(count+1))
     
     if max_val_acc < validation_accuracy:
         max_val_acc = validation_accuracy
         
 
-    if count < 1:
-        print('OPTIMIZATION')
-        model,_ = optimize(model,weight_list_per_epoch,0,50,True)
-        model = my_delete_filters(model,weight_list_per_epoch,50,True)
-        print('FINETUNING')
-        model,history,weight_list_per_epoch = train(model,10)
-   
-    elif count <= 3:
-        print('OPTIMIZATION')
-        model,_ =optimize(model,weight_list_per_epoch,5,30,False)
-        model = my_delete_filters(model,weight_list_per_epoch,30,False)
-        print('FINETUNING')
-        model,history,weight_list_per_epoch = train(model,10)
-    else:
-        print('OPTIMIZATION')   
-        model,_ =optimize(model,weight_list_per_epoch,5,30,False)
-        model = my_delete_filters(model,weight_list_per_epoch,30,False)
-        print('FINETUNING')
-        model,history,weight_list_per_epoch = train(model,10)
+    print('OPTIMIZATION')
+    model,_ = optimize(model,weight_list_per_epoch,10,50,True)
+    model = my_delete_filters(model,weight_list_per_epoch,50,True)
+    print('FINETUNING')
+    model,history,weight_list_per_epoch = train(model,10)
 
     a,b = count_model_params_flops(model,False)
     
