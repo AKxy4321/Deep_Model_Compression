@@ -494,7 +494,7 @@ class cifar10vgg:
         #training parameters
         batch_size = 128
         maxepoches = 10
-        learning_rate = 0.01
+        learning_rate = 0.001
         lr_decay = 1e-6
         lr_drop = 20
         # The data, shuffled and split between train and test sets:
@@ -570,7 +570,7 @@ def train(model,epochs):
     """
     #training parameters
     batch_size = 128
-    learning_rate = 0.01
+    learning_rate = 0.001
     lr_decay = 1e-6
     lr_drop = 20
 
@@ -694,7 +694,7 @@ def optimize(model,weight_list_per_epoch,epochs,percentage,first_time):
         hisory: accuracies and losses over the process keras library
     """
     batch_size = 128
-    learning_rate = 0.01
+    learning_rate = 0.001
     lr_decay = 1e-6
     lr_drop = 20
 
@@ -759,7 +759,7 @@ if choice == 'Y':
     my_vgg = cifar10vgg(first_time=True,epochs=0,train=False)
     model = my_vgg.model
 
-    learning_rate = 0.1
+    learning_rate = 0.001
     lr_decay = 1e-6
     lr_drop = 20
     
@@ -771,9 +771,9 @@ if choice == 'Y':
     model.compile(loss='categorical_crossentropy', optimizer=sgd,metrics=['acc'])
 
     weight_list_per_epoch = list()
-    # data = np.load("./1.npz")
-    # for i in range(13):
-    #     weight_list_per_epoch.append(data['w_{}'.format(i+1)])
+    data = np.load(os.path.join('.', 'models', 'vgg_weights.npz'))
+    for i in range(13):
+        weight_list_per_epoch.append(data['w_{}'.format(i+1)])
 
     (x_train,y_train),(x_test,y_test) = cifar10.load_data()
     x_train,x_test = normalize(x_train,x_test)
@@ -795,7 +795,7 @@ elif choice == 'N':
     model.save_weights(os.path.join('.', 'models', 'cifar10vgg.h5'))
     print("Model is Saved")
     #save the weights of training process
-    np.savez("./1.npz"
+    np.savez(os.path.join('.', 'models', 'vgg_weights.npz')
             ,w_1=weight_list_per_epoch[0],
             w_2=weight_list_per_epoch[1],
             w_3=weight_list_per_epoch[2],
