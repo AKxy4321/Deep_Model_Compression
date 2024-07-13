@@ -775,6 +775,29 @@ if choice == 'Y':
     for i in range(13):
         weight_list_per_epoch.append(data['w_{}'.format(i+1)])
 
+    ###############################################################
+    # Training Model in Parts
+    model = train(model, 50)
+    model.save_weights(os.path.join('.', 'models', 'cifar10vgg.h5'))
+    print("Model is Saved")
+    #save the weights of training process
+    np.savez(os.path.join('.', 'models', 'vgg_weights.npz')
+            ,w_1=weight_list_per_epoch[0],
+            w_2=weight_list_per_epoch[1],
+            w_3=weight_list_per_epoch[2],
+            w_4=weight_list_per_epoch[3],
+            w_5=weight_list_per_epoch[4],
+            w_6=weight_list_per_epoch[5],
+            w_7=weight_list_per_epoch[6],
+            w_8=weight_list_per_epoch[7],
+            w_9=weight_list_per_epoch[8],
+            w_10=weight_list_per_epoch[9],
+            w_11=weight_list_per_epoch[10],
+            w_12=weight_list_per_epoch[11],
+            w_13=weight_list_per_epoch[12])
+    print("Weights are Saved")
+
+    ###############################################################
     (x_train,y_train),(x_test,y_test) = cifar10.load_data()
     x_train,x_test = normalize(x_train,x_test)
     y_train = keras.utils.to_categorical(y_train,10)
