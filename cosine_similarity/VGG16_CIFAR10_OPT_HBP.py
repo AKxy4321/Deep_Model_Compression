@@ -860,12 +860,11 @@ while validation_accuracy - max_val_acc >= -0.01 :
     if max_val_acc < validation_accuracy:
         max_val_acc = validation_accuracy
         
-    print(type(model))
     print('OPTIMIZATION')
-    model,_ = optimize(model,weight_list_per_epoch,1,50,True)
+    model,_ = optimize(model,weight_list_per_epoch,10,50,True)
     model = my_delete_filters(model,weight_list_per_epoch,50,True)
     print('FINETUNING')
-    model,history,weight_list_per_epoch = train(model,1)
+    model,history,weight_list_per_epoch = train(model,10)
 
     a,b = count_model_params_flops(model,False)
     
@@ -883,5 +882,6 @@ while validation_accuracy - max_val_acc >= -0.01 :
     print("VALIDATION acc AFTER {} ITERATIONS = {}".format(count+1,validation_accuracy))
     count+=1
 
+print(f"Previous Validation Accuracy {validation_accuracy}\n\n Max Validation Accuracy {max_val_acc}\n\n\n")
 log_df = pd.DataFrame(log_dict)
 log_df.to_csv(os.path.join('.', 'results', 'VGG16_3.csv'))
