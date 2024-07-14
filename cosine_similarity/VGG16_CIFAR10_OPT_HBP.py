@@ -777,26 +777,26 @@ if choice == 'Y':
 
     ###############################################################
     # Training Model in Parts
-    my_vgg.epochs = 75
-    model, history ,train_weight_list_per_epoch = my_vgg.train(model)
-    my_vgg.model.save_weights(os.path.join('.', 'models', 'cifar10vgg.h5'))
-    print("Model is Saved")
-    #save the weights of training process
-    np.savez(os.path.join('.', 'models', 'vgg_weights.npz')
-            ,w_1=train_weight_list_per_epoch[0],
-            w_2=train_weight_list_per_epoch[1],
-            w_3=train_weight_list_per_epoch[2],
-            w_4=train_weight_list_per_epoch[3],
-            w_5=train_weight_list_per_epoch[4],
-            w_6=train_weight_list_per_epoch[5],
-            w_7=train_weight_list_per_epoch[6],
-            w_8=train_weight_list_per_epoch[7],
-            w_9=train_weight_list_per_epoch[8],
-            w_10=train_weight_list_per_epoch[9],
-            w_11=train_weight_list_per_epoch[10],
-            w_12=train_weight_list_per_epoch[11],
-            w_13=train_weight_list_per_epoch[12])
-    print("Weights are Saved")
+    # my_vgg.epochs = 75
+    # model, history ,train_weight_list_per_epoch = my_vgg.train(model)
+    # my_vgg.model.save_weights(os.path.join('.', 'models', 'cifar10vgg.h5'))
+    # print("Model is Saved")
+    # #save the weights of training process
+    # np.savez(os.path.join('.', 'models', 'vgg_weights.npz')
+    #         ,w_1=train_weight_list_per_epoch[0],
+    #         w_2=train_weight_list_per_epoch[1],
+    #         w_3=train_weight_list_per_epoch[2],
+    #         w_4=train_weight_list_per_epoch[3],
+    #         w_5=train_weight_list_per_epoch[4],
+    #         w_6=train_weight_list_per_epoch[5],
+    #         w_7=train_weight_list_per_epoch[6],
+    #         w_8=train_weight_list_per_epoch[7],
+    #         w_9=train_weight_list_per_epoch[8],
+    #         w_10=train_weight_list_per_epoch[9],
+    #         w_11=train_weight_list_per_epoch[10],
+    #         w_12=train_weight_list_per_epoch[11],
+    #         w_13=train_weight_list_per_epoch[12])
+    # print("Weights are Saved")
 
     ###############################################################
     (x_train,y_train),(x_test,y_test) = cifar10.load_data()
@@ -860,12 +860,12 @@ while validation_accuracy - max_val_acc >= -0.01 :
     if max_val_acc < validation_accuracy:
         max_val_acc = validation_accuracy
         
-
+    print(type(model))
     print('OPTIMIZATION')
-    model,_ = optimize(model,weight_list_per_epoch,10,50,True)
+    model,_ = optimize(model,weight_list_per_epoch,1,50,True)
     model = my_delete_filters(model,weight_list_per_epoch,50,True)
     print('FINETUNING')
-    model,history,weight_list_per_epoch = train(model,10)
+    model,history,weight_list_per_epoch = train(model,1)
 
     a,b = count_model_params_flops(model,False)
     
