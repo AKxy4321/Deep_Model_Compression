@@ -572,16 +572,24 @@ while validation_accuracy - max_val_acc >= -0.01:# and  count < 3:
     if max_val_acc < validation_accuracy:
         max_val_acc = validation_accuracy
         
-
-    if count < 1:
-        optimize(model,weight_list_per_epoch,10,50,True)
-        model = my_delete_filters(model,weight_list_per_epoch,50,True)
-        model,history,weight_list_per_epoch = train(model,10,False)
-   
-    else:
-        optimize(model,weight_list_per_epoch,10,30,False)
-        model = my_delete_filters(model,weight_list_per_epoch,30,False)
-        model,history,weight_list_per_epoch = train(model,20,False)
+    try:
+        if count < 1:
+            optimize(model,weight_list_per_epoch,10,50,True)
+            model = my_delete_filters(model,weight_list_per_epoch,50,True)
+            model,history,weight_list_per_epoch = train(model,10,False)
+    
+        else:
+            optimize(model,weight_list_per_epoch,10,30,False)
+            model = my_delete_filters(model,weight_list_per_epoch,30,False)
+            model,history,weight_list_per_epoch = train(model,20,False)
+    
+    except IndexError:
+        print("LIMIT REACHED")
+        model.summary()
+        log_df = pd.DataFrame(log_dict)
+        log_df.to_csv(os.path.join('.', 'results', 'lenet5_2.csv'))
+        print("Files Saved")
+        exit()
 
     a,b = count_model_params_flops(model,False)
     print(a,b)
