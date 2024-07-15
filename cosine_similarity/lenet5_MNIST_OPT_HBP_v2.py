@@ -589,6 +589,7 @@ while validation_accuracy - max_val_acc >= -0.01:# and  count < 3:
         log_df = pd.DataFrame(log_dict)
         log_df.to_csv(os.path.join('.', 'results', 'lenet5_2.csv'))
         print("Files Saved")
+        print("Final Validation acc = ",(max(history.history['val_acc'])*100))
         exit()
 
     a,b = count_model_params_flops(model,False)

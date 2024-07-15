@@ -1,2 +1,0 @@
-,train_loss,train_acc,val_loss,val_acc,total_params,total_flops
-0,2.516043458328247,0.7566,2.6170521476745607,0.7311,14982474,313463808
