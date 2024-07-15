@@ -32,6 +32,7 @@ from kerassurgeon.operations import delete_channels,delete_layer
 from kerassurgeon import Surgeon
 from sklearn.metrics.pairwise import cosine_similarity
 import os
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
 def my_get_all_conv_layers(model , first_time):
 

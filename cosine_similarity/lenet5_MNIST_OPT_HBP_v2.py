@@ -29,7 +29,7 @@ from kerassurgeon.operations import delete_channels,delete_layer
 from kerassurgeon import Surgeon
 from sklearn.metrics.pairwise import cosine_similarity
 import os
-
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 def my_get_all_conv_layers(model , first_time):
 
     '''
@@ -578,14 +578,9 @@ while validation_accuracy - max_val_acc >= -0.01:# and  count < 3:
         model = my_delete_filters(model,weight_list_per_epoch,50,True)
         model,history,weight_list_per_epoch = train(model,10,False)
    
-    elif count < 5:
+    else:
         optimize(model,weight_list_per_epoch,10,30,False)
         model = my_delete_filters(model,weight_list_per_epoch,30,False)
-        model,history,weight_list_per_epoch = train(model,20,False)
-
-    else:
-        optimize(model,weight_list_per_epoch,10,10,False)
-        model = my_delete_filters(model,weight_list_per_epoch,10,False)
         model,history,weight_list_per_epoch = train(model,20,False)
 
     a,b = count_model_params_flops(model,False)

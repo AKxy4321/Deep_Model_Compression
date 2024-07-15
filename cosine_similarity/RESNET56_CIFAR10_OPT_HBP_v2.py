@@ -43,7 +43,7 @@ from keras.models import Model
 from keras.datasets import cifar10
 import numpy as np
 import os
-
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
 # !pip install kerassurgeon
 from kerassurgeon import identify
