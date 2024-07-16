@@ -20,16 +20,16 @@ from keras.layers.core import Lambda
 from keras import backend as K
 from keras import regularizers
 from keras.callbacks import ModelCheckpoint
-
+from sklearn.metrics.pairwise import cosine_similarity
 
 
 # !pip install kerassurgeon
 from kerassurgeon import identify 
-from kerassurgeon.operations import delete_channels,delete_layer
+from kerassurgeon.operations import delete_channels, delete_layer
 from kerassurgeon import Surgeon
-from sklearn.metrics.pairwise import cosine_similarity
 import os
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
+
 def my_get_all_conv_layers(model , first_time):
 
     '''
@@ -83,31 +83,28 @@ def my_get_weights_in_conv_layers(model,first_time):
     return weights
 
 
-def my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch):
+def my_get_l1_norms_filters_per_epoch(weight_list_per_epoch):
+
     '''
     Arguments:
-        weight_list_per_epoch: List of weights for each epoch
+        List
     Return:
-        cosine_similarities_filters_per_epoch: List of cosine similarities for filters per epoch
+        Number of parmaters, Number of Flops
     '''
+    
     cosine_similarities_filters_per_epoch = []
 
-    for index in range(len(weight_list_per_epoch)):
-        epoch_weights = np.array(weight_list_per_epoch[index])
-        epochs = epoch_weights.shape[0]
-        h, w, d = epoch_weights.shape[1], epoch_weights.shape[2], epoch_weights.shape[3]
-
-        cosine_similarities_per_epoch = []
-
-        for epoch in range(epochs):
-            filters = epoch_weights[epoch].reshape(epoch_weights[epoch].shape[0], -1) 
-            cosine_sim_matrix = cosine_similarity(filters)  
-            sum_cosine_similarities = np.sum(cosine_sim_matrix, axis=1) 
-            cosine_similarities_per_epoch.append(sum_cosine_similarities)
-        
-        cosine_similarities_filters_per_epoch.append(cosine_similarities_per_epoch)
-    
-    return np.array(cosine_similarities_filters_per_epoch)                            # Return as numpy array so that transpose can be implemented
+    for weight_array in weight_list_per_epoch:
+        weight_array = np.array(weight_array)
+        epochs = weight_array.shape[0]
+       	# h, w, d = weight_array.shape[1], weight_array.shape[2], weight_array.shape[3]
+        num_filters = weight_array.shape[4]
+        flattened_filters = weight_array.reshape(-1, num_filters).T
+        cosine_sim = cosine_similarity(flattened_filters)
+        summed_cosine_similarities = np.sum(cosine_sim, axis=1) - 1
+        cosine_similarities_filters_per_epoch.append(summed_cosine_similarities.reshape(epochs, -1))
+       	# print(f"Epochs: {epochs}, Height: {h}, Width: {w}, Depth: {d}, NumFilters: {num_filters}")
+    return cosine_similarities_filters_per_epoch                            # Return as numpy array so that transpose can be implemented
 
 def my_in_conv_layers_get_sum_of_l1_norms_sorted_indices(weight_list_per_epoch):
     '''
@@ -119,7 +116,7 @@ def my_in_conv_layers_get_sum_of_l1_norms_sorted_indices(weight_list_per_epoch):
     '''
     layer_wise_filter_sorted_indices = list()
     layer_wise_filter_sorted_values = list()
-    l1_norms_filters_per_epoch = my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch)
+    l1_norms_filters_per_epoch = my_get_l1_norms_filters_per_epoch(weight_list_per_epoch)
     sum_l1_norms = list()
     
     for i in l1_norms_filters_per_epoch:
@@ -174,7 +171,7 @@ def my_get_distance_matrix_list(l1_norm_matrix_list):
 
 
 
-def my_get_episodes(distance_matrix,percentage):      # episodes - filter selection at each iteration
+def my_get_episodes(distance_matrix,percentage):
     """
     Arguments:
         distance_matrix:
@@ -255,7 +252,7 @@ def my_delete_filters(model,weight_list_per_epoch,percentage,first_time):
         model_new:input model after pruning
 
     """
-    l1_norms = my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch)
+    l1_norms = my_get_l1_norms_filters_per_epoch(weight_list_per_epoch)
     distance_matrix_list = my_get_distance_matrix_list(l1_norms)
     episodes_for_all_layers = my_get_episodes_for_all_layers(distance_matrix_list,percentage)
     filter_pruning_indices = my_get_filter_pruning_indices(episodes_for_all_layers,l1_norms)
@@ -425,10 +422,9 @@ def train(model,epochs,first_time):
 
     return model,history,gw.weight_list
 
-model,history,weight_list_per_epoch = train(model,10,True)
+model,history,weight_list_per_epoch = train(model,1,True)
 initial_flops = count_model_params_flops(model,True)[1]
 log_dict = dict()
-log_dict['epoch'] = []
 log_dict['train_loss'] = []
 log_dict['train_acc'] = []
 log_dict['val_loss'] = []
@@ -439,7 +435,6 @@ log_dict['filters_in_conv1'] = []
 log_dict['filters_in_conv2'] = []
 
 best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
-log_dict['epoch'].append(len(history.history['val_acc']) + 1)
 log_dict['train_loss'].append(history.history['loss'][best_acc_index])
 log_dict['train_acc'].append(history.history['acc'][best_acc_index])
 log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
@@ -449,7 +444,6 @@ log_dict['total_params'].append(a)
 log_dict['total_flops'].append(b)
 log_dict['filters_in_conv1'].append(model.layers[0].get_weights()[0].shape[-1])
 log_dict['filters_in_conv2'].append(model.layers[2].get_weights()[0].shape[-1])
-
 al = history
 
 from keras import backend as K
@@ -493,7 +487,7 @@ def my_get_regularizer_value(model,weight_list_per_epoch,percentage,first_time):
     Return:
         regularizer_value
     """
-    l1_norms_per_epoch = my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch)
+    l1_norms_per_epoch = my_get_l1_norms_filters_per_epoch(weight_list_per_epoch)
     distance_matrix_list = my_get_distance_matrix_list(l1_norms_per_epoch)
     episodes_for_all_layers = my_get_episodes_for_all_layers(distance_matrix_list,percentage)
     l1_norms = my_get_l1_norms_filters(model,first_time)
@@ -564,7 +558,7 @@ count = 0
 all_models = list()
 a,b = count_model_params_flops(model,False)
 print(a,b)
-while validation_accuracy - max_val_acc >= -0.01:# and  count < 3:
+while validation_accuracy - max_val_acc >= -0.01:
 
 
     print("ITERATION {} ".format(count+1))
@@ -572,25 +566,16 @@ while validation_accuracy - max_val_acc >= -0.01:# and  count < 3:
     if max_val_acc < validation_accuracy:
         max_val_acc = validation_accuracy
         
-    try:
-        if count < 1:
-            optimize(model,weight_list_per_epoch,10,50,True)
-            model = my_delete_filters(model,weight_list_per_epoch,50,True)
-            model,history,weight_list_per_epoch = train(model,10,False)
-    
-        else:
-            optimize(model,weight_list_per_epoch,10,30,False)
-            model = my_delete_filters(model,weight_list_per_epoch,30,False)
-            model,history,weight_list_per_epoch = train(model,20,False)
-    
-    except IndexError:
-        print("LIMIT REACHED")
-        model.summary()
-        log_df = pd.DataFrame(log_dict)
-        log_df.to_csv(os.path.join('.', 'results', 'lenet5_2.csv'))
-        print("Files Saved")
-        print("Final Validation acc = ",(max(history.history['val_acc'])*100))
-        exit()
+
+    if count < 1:
+        # optimize(model,weight_list_per_epoch,1,50,True)
+        model = my_delete_filters(model,weight_list_per_epoch,50,True)
+        model,history,weight_list_per_epoch = train(model,10,False)
+   
+    else:
+        optimize(model,weight_list_per_epoch,10,30,False)
+        model = my_delete_filters(model,weight_list_per_epoch,30,False)
+        model,history,weight_list_per_epoch = train(model,20,False)
 
     a,b = count_model_params_flops(model,False)
     print(a,b)
@@ -598,7 +583,6 @@ while validation_accuracy - max_val_acc >= -0.01:# and  count < 3:
     # al+=history
     validation_accuracy = max(history.history['val_acc'])
     best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
-    log_dict['epoch'].append(len(history.history['val_acc']) + 1)
     log_dict['train_loss'].append(history.history['loss'][best_acc_index])
     log_dict['train_acc'].append(history.history['acc'][best_acc_index])
     log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
@@ -613,7 +597,7 @@ while validation_accuracy - max_val_acc >= -0.01:# and  count < 3:
 
 model.summary()
 
-l1_norms = my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch)
+l1_norms = my_get_l1_norms_filters_per_epoch(weight_list_per_epoch)
 distance_matrix_list = my_get_distance_matrix_list(l1_norms)
 episodes_for_all_layers = my_get_episodes_for_all_layers(distance_matrix_list,95)
 print(episodes_for_all_layers)
@@ -634,7 +618,6 @@ model.summary()
 model,history,weight_list_per_epoch = train(model,60,False)
 
 best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
-log_dict['epoch'].append(len(history.history['val_acc']) + 1)
 log_dict['train_loss'].append(history.history['loss'][best_acc_index])
 log_dict['train_acc'].append(history.history['acc'][best_acc_index])
 log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
@@ -649,5 +632,5 @@ print("Final Validation acc = ",(max(history.history['val_acc'])*100))
 log_df = pd.DataFrame(log_dict)
 log_df
 
-log_df.to_csv(os.path.join('.', 'results', 'lenet5_2.csv'))
+log_df.to_csv(os.path.join('.', 'results', 'lenet5_2_results.csv'))
 
