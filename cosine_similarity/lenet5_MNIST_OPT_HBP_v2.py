@@ -422,7 +422,7 @@ def train(model,epochs,first_time):
 
     return model,history,gw.weight_list
 
-model,history,weight_list_per_epoch = train(model,1,True)
+model,history,weight_list_per_epoch = train(model,10,True)
 initial_flops = count_model_params_flops(model,True)[1]
 log_dict = dict()
 log_dict['train_loss'] = []
@@ -568,7 +568,7 @@ while validation_accuracy - max_val_acc >= -0.01:
         
 
     if count < 1:
-        # optimize(model,weight_list_per_epoch,1,50,True)
+        optimize(model,weight_list_per_epoch,10,50,True)
         model = my_delete_filters(model,weight_list_per_epoch,50,True)
         model,history,weight_list_per_epoch = train(model,10,False)
    
