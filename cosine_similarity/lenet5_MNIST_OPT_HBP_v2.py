@@ -93,17 +93,19 @@ def my_get_l1_norms_filters_per_epoch(weight_list_per_epoch):
     '''
     
     cosine_similarities_filters_per_epoch = []
-
+    epochs = np.array(weight_list_per_epoch[0]).shape[0]
     for weight_array in weight_list_per_epoch:
-        weight_array = np.array(weight_array)
-        epochs = weight_array.shape[0]
-       	# h, w, d = weight_array.shape[1], weight_array.shape[2], weight_array.shape[3]
-        num_filters = weight_array.shape[4]
-        flattened_filters = weight_array.reshape(-1, num_filters).T
-        cosine_sim = cosine_similarity(flattened_filters)
-        summed_cosine_similarities = np.sum(cosine_sim, axis=1) - 1
-        cosine_similarities_filters_per_epoch.append(summed_cosine_similarities.reshape(epochs, -1))
-       	# print(f"Epochs: {epochs}, Height: {h}, Width: {w}, Depth: {d}, NumFilters: {num_filters}")
+        epoch_cosine_similarities = []
+        for epochs in weight_array:
+            num_filters = epochs.shape[3]
+            h, w, d = epochs.shape[0], epochs.shape[1], epochs.shape[2]
+            flattened_filters = epochs.reshape(-1, num_filters).T
+            cosine_sim = cosine_similarity(flattened_filters)
+            summed_cosine_similarities = np.sum(cosine_sim, axis=1) - 1
+            epoch_cosine_similarities.append(summed_cosine_similarities.tolist())
+        cosine_similarities_filters_per_epoch.append(np.array(epoch_cosine_similarities))
+
+    print(cosine_similarities_filters_per_epoch)
     return cosine_similarities_filters_per_epoch                            # Return as numpy array so that transpose can be implemented
 
 def my_in_conv_layers_get_sum_of_l1_norms_sorted_indices(weight_list_per_epoch):

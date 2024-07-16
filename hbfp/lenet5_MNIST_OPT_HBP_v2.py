@@ -27,6 +27,8 @@ from keras.callbacks import ModelCheckpoint
 from kerassurgeon import identify 
 from kerassurgeon.operations import delete_channels,delete_layer
 from kerassurgeon import Surgeon
+import os
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
 def my_get_all_conv_layers(model , first_time):
 
@@ -102,7 +104,8 @@ def my_get_l1_norms_filters_per_epoch(weight_list_per_epoch):
 
         l1_norms_per_epoch = np.sum(np.abs(weight_list_per_epoch[index]), axis=(1, 2, 3)).reshape(epochs, -1)
         l1_norms_filters_per_epoch.append(l1_norms_per_epoch)
-        
+    
+    print(f'L1 Norms: {l1_norms_filters_per_epoch}, {len(l1_norms_filters_per_epoch[0])}, {len(l1_norms_filters_per_epoch[0][0])}, {len(l1_norms_filters_per_epoch[1][0])}')
     return l1_norms_filters_per_epoch
 
 def my_in_conv_layers_get_sum_of_l1_norms_sorted_indices(weight_list_per_epoch):
