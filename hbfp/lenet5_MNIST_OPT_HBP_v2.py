@@ -105,7 +105,7 @@ def my_get_l1_norms_filters_per_epoch(weight_list_per_epoch):
         l1_norms_per_epoch = np.sum(np.abs(weight_list_per_epoch[index]), axis=(1, 2, 3)).reshape(epochs, -1)
         l1_norms_filters_per_epoch.append(l1_norms_per_epoch)
     
-    print(f'L1 Norms: {l1_norms_filters_per_epoch}, {len(l1_norms_filters_per_epoch[0])}, {len(l1_norms_filters_per_epoch[0][0])}, {len(l1_norms_filters_per_epoch[1][0])}')
+    # print(f'L1 Norms: {l1_norms_filters_per_epoch}, {len(l1_norms_filters_per_epoch[0])}, {len(l1_norms_filters_per_epoch[0][0])}, {len(l1_norms_filters_per_epoch[1][0])}')
     return l1_norms_filters_per_epoch
 
 def my_in_conv_layers_get_sum_of_l1_norms_sorted_indices(weight_list_per_epoch):
@@ -560,7 +560,7 @@ count = 0
 all_models = list()
 a,b = count_model_params_flops(model,False)
 print(a,b)
-while validation_accuracy - max_val_acc >= -0.01 and  count < 3:
+while validation_accuracy - max_val_acc >= -0.01:
 
 
     print("ITERATION {} ".format(count+1))

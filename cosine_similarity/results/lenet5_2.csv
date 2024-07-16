@@ -1,2 +1,0 @@
-,epoch,train_loss,train_acc,val_loss,val_acc,total_params,total_flops,filters_in_conv1,filters_in_conv2
-0,11,0.008528526066616178,0.9971,0.024874413300384184,0.9931,431080,4586000,20,50
