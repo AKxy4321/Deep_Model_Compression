@@ -43,7 +43,7 @@ from keras.models import Model
 from keras.datasets import cifar10
 import numpy as np
 import os
-
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
 # !pip install kerassurgeon
 from kerassurgeon import identify
@@ -195,23 +195,19 @@ def my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch):
         cosine_similarities_filters_per_epoch: List of cosine similarities for filters per epoch
     '''
     cosine_similarities_filters_per_epoch = []
-
-    for index in range(len(weight_list_per_epoch)):
-        epoch_weights = np.array(weight_list_per_epoch[index])
-        epochs = epoch_weights.shape[0]
-        h, w, d = epoch_weights.shape[1], epoch_weights.shape[2], epoch_weights.shape[3]
-
-        cosine_similarities_per_epoch = []
-
-        for epoch in range(epochs):
-            filters = epoch_weights[epoch].reshape(epoch_weights[epoch].shape[0], -1) 
-            cosine_sim_matrix = cosine_similarity(filters)  
-            sum_cosine_similarities = np.sum(cosine_sim_matrix, axis=1) 
-            cosine_similarities_per_epoch.append(sum_cosine_similarities)
-        
-        cosine_similarities_filters_per_epoch.append(cosine_similarities_per_epoch)
+    epochs = np.array(weight_list_per_epoch[0]).shape[0]
+    for weight_array in weight_list_per_epoch:
+        epoch_cosine_similarities = []
+        for epochs in weight_array:
+            num_filters = epochs.shape[3]
+            h, w, d = epochs.shape[0], epochs.shape[1], epochs.shape[2]
+            flattened_filters = epochs.reshape(-1, num_filters).T
+            cosine_sim = cosine_similarity(flattened_filters)
+            summed_cosine_similarities = np.sum(cosine_sim, axis=1) - 1
+            epoch_cosine_similarities.append(summed_cosine_similarities.tolist())
+        cosine_similarities_filters_per_epoch.append(np.array(epoch_cosine_similarities))
     
-    return np.array(cosine_similarities_filters_per_epoch)  
+    return cosine_similarities_filters_per_epoch
 
 def my_in_conv_layers_get_sum_of_cosine_similarity_sorted_indices(weight_list_per_epoch):
     '''

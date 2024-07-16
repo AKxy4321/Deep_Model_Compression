@@ -27,6 +27,7 @@ from keras.callbacks import ModelCheckpoint
 from kerassurgeon import identify 
 from kerassurgeon.operations import delete_channels,delete_layer
 from kerassurgeon import Surgeon
+import os
 
 def my_get_all_conv_layers(model , first_time):
 
@@ -233,6 +234,11 @@ def my_get_filter_pruning_indices(episodes_for_all_layers,l1_norm_matrix_list):
             a.add(episode[0])
         a = list(a)
         filter_pruning_indices.append(a)
+    
+    output_path = os.path.join('hbfp', 'results', 'hbfp_pruned_filters.txt')
+    with open(output_path, 'w') as f:
+        for indices in filter_pruning_indices:
+            f.write(' '.join(map(str, indices)) + '\n')
     return filter_pruning_indices
 
 

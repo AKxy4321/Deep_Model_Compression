@@ -1,1 +1,4 @@
 **/saved_models/
+.vscode/settings.json
+**/results/
+**/models/
