@@ -238,12 +238,9 @@ def my_get_filter_pruning_indices(episodes_for_all_layers,l1_norm_matrix_list):
         filter_pruning_indices.append(a)
 
     output_path = os.path.join('cosine_similarity', 'results', 'cosine_pruned_filters.txt')
-    i= 1
     with open(output_path, 'a') as f:
         for indices in filter_pruning_indices:
             f.write(' '.join(map(str, indices)) + '\n')
-            
-            i+=1
     return filter_pruning_indices
 
 
