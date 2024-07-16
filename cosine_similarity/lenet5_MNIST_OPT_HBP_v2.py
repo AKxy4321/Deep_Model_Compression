@@ -105,7 +105,7 @@ def my_get_l1_norms_filters_per_epoch(weight_list_per_epoch):
             epoch_cosine_similarities.append(summed_cosine_similarities.tolist())
         cosine_similarities_filters_per_epoch.append(np.array(epoch_cosine_similarities))
 
-    print(cosine_similarities_filters_per_epoch)
+    # print(cosine_similarities_filters_per_epoch)
     return cosine_similarities_filters_per_epoch                            # Return as numpy array so that transpose can be implemented
 
 def my_in_conv_layers_get_sum_of_l1_norms_sorted_indices(weight_list_per_epoch):
