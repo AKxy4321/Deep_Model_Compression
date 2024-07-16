@@ -236,6 +236,14 @@ def my_get_filter_pruning_indices(episodes_for_all_layers,l1_norm_matrix_list):
             a.add(episode[0])
         a = list(a)
         filter_pruning_indices.append(a)
+
+    output_path = os.path.join('cosine_similarity', 'results', 'cosine_pruned_filters.txt')
+    i= 1
+    with open(output_path, 'a') as f:
+        for indices in filter_pruning_indices:
+            f.write(' '.join(map(str, indices)) + '\n')
+            
+            i+=1
     return filter_pruning_indices
 
 
@@ -630,6 +638,10 @@ log_dict['total_flops'].append(b)
 log_dict['filters_in_conv1'].append(model.layers[1].get_weights()[0].shape[-1])
 log_dict['filters_in_conv2'].append(model.layers[3].get_weights()[0].shape[-1])
 print("Final Validation acc = ",(max(history.history['val_acc'])*100))
+output_path = os.path.join('cosine_similarity', 'results', 'cosine_pruned_filters.txt')
+with open(output_path, 'a') as f:
+    f.write('\n Final Validation accuracy:  ' + str(max(history.history['val_acc'])*100) + '\n')
+
 
 log_df = pd.DataFrame(log_dict)
 log_df
