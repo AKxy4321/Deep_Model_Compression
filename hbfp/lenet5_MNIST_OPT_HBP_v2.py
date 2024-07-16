@@ -28,6 +28,8 @@ from kerassurgeon import identify
 from kerassurgeon.operations import delete_channels,delete_layer
 from kerassurgeon import Surgeon
 import os
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
+
 
 def my_get_all_conv_layers(model , first_time):
 
@@ -103,7 +105,8 @@ def my_get_l1_norms_filters_per_epoch(weight_list_per_epoch):
 
         l1_norms_per_epoch = np.sum(np.abs(weight_list_per_epoch[index]), axis=(1, 2, 3)).reshape(epochs, -1)
         l1_norms_filters_per_epoch.append(l1_norms_per_epoch)
-        
+    
+    # print(f'L1 Norms: {l1_norms_filters_per_epoch}, {len(l1_norms_filters_per_epoch[0])}, {len(l1_norms_filters_per_epoch[0][0])}, {len(l1_norms_filters_per_epoch[1][0])}')
     return l1_norms_filters_per_epoch
 
 def my_in_conv_layers_get_sum_of_l1_norms_sorted_indices(weight_list_per_epoch):
@@ -235,8 +238,8 @@ def my_get_filter_pruning_indices(episodes_for_all_layers,l1_norm_matrix_list):
         a = list(a)
         filter_pruning_indices.append(a)
     
-    output_path = os.path.join('hbfp', 'results', 'hbfp_pruned_filters.txt')
-    with open(output_path, 'w') as f:
+    output_path = os.path.join('cosine_similarity', 'results', 'cosine_pruned_filters.txt')
+    with open(output_path, 'a') as f:
         for indices in filter_pruning_indices:
             f.write(' '.join(map(str, indices)) + '\n')
     return filter_pruning_indices
@@ -563,7 +566,7 @@ count = 0
 all_models = list()
 a,b = count_model_params_flops(model,False)
 print(a,b)
-while validation_accuracy - max_val_acc >= -0.01 and  count < 3:
+while validation_accuracy - max_val_acc >= -0.01:
 
 
     print("ITERATION {} ".format(count+1))
@@ -633,6 +636,10 @@ log_dict['total_flops'].append(b)
 log_dict['filters_in_conv1'].append(model.layers[1].get_weights()[0].shape[-1])
 log_dict['filters_in_conv2'].append(model.layers[3].get_weights()[0].shape[-1])
 print("Final Validation acc = ",(max(history.history['val_acc'])*100))
+
+output_path = os.path.join('cosine_similarity', 'results', 'cosine_pruned_filters.txt')
+with open(output_path, 'a') as f:
+    f.write('\n Final Validation accuracy:  ' + str(max(history.history['val_acc'])*100) + '\n')
 
 log_df = pd.DataFrame(log_dict)
 log_df

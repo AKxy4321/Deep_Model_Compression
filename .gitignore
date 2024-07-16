@@ -2,3 +2,5 @@
 .vscode/settings.json
 **/results/
 **/models/
+*.npz
+
