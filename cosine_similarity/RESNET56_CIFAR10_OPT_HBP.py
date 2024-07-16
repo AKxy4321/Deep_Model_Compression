@@ -703,7 +703,7 @@ model.compile(loss='categorical_crossentropy',
 
 
 # Prepare model model saving directory.
-save_dir = os.path.join('.', 'saved_models')
+save_dir = os.path.join('.', 'models')
 model_name = 'cifar10_%s_model.{epoch:03d}.h5' % model_type
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
