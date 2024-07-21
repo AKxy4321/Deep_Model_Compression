@@ -381,8 +381,8 @@ class Get_Weights(Callback):
                 self.weight_list[index].append(each_weight)
 
 # Training parameters
-batch_size = 128  # orig paper trained all networks with batch_size=128
-epochs = 1
+batch_size = 64  # orig paper trained all networks with batch_size=128
+epochs = 60
 data_augmentation = True
 num_classes = 10
 

@@ -172,27 +172,22 @@ def my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch):
         cosine_similarities_filters_per_epoch: List of cosine similarities for filters per epoch
     '''
     
-    # weight_list_per_epoch = my_get_weights_in_conv_layers(model,first_time)
-    cosine_similarities_filters_per_epoch = list()
-    
+    cosine_similarities_filters_per_epoch = []
+    epochs = np.array(weight_list_per_epoch[0]).shape[0]
+    for weight_array in weight_list_per_epoch:
+        epoch_cosine_similarities = []
+        for epochs in weight_array:
+            num_filters = epochs.shape[3]
+            h, w, d = epochs.shape[0], epochs.shape[1], epochs.shape[2]
+            flattened_filters = epochs.reshape(-1, num_filters).T
+            cosine_sim = cosine_similarity(flattened_filters)
+            summed_cosine_similarities = np.sum(cosine_sim, axis=1) - 1
+            epoch_cosine_similarities.append(summed_cosine_similarities.tolist())
+        cosine_similarities_filters_per_epoch.append(np.array(epoch_cosine_similarities))
 
-    for index in range(len(weight_list_per_epoch)):
-        epoch_weights = np.array(weight_list_per_epoch[index])
-        epochs = np.array(weight_list_per_epoch[index]).shape[0]
-        h , w , d = epoch_weights.shape[1],epoch_weights.shape[2] , epoch_weights.shape[3]
-        
-        cosine_similarities_per_epoch=[]
-        
-        for epoch in range(epochs):
-            filters=epoch_weights[epoch].reshape(epoch_weights[epoch].shape[0],-1)
-            cosine_sim_matrix=cosine_similarity(filters)
-            sum_cosine_similarities =np.sum(cosine_sim_matrix,axis=1)
-            cosine_similarities_per_epoch.append(sum_cosine_similarities)
-            
-        cosine_similarities_filters_per_epoch.append(cosine_similarities_per_epoch)
-        
-            
-    return np.array(cosine_similarities_filters_per_epoch)
+    # print(cosine_similarities_filters_per_epoch)
+    return cosine_similarities_filters_per_epoch                            # Return as numpy array so that transpose can be implemented
+
 
 def my_in_conv_layers_get_sum_of_l1_norms_sorted_indices(weight_list_per_epoch):
     '''
@@ -863,15 +858,15 @@ while validation_accuracy - max_val_acc >= -0.01 :
         
     if count < 1:
         print('OPTIMIZATION')
-        model,_ = optimize(model,weight_list_per_epoch,50,10,True)
-        model = my_delete_filters(model,weight_list_per_epoch,10,True)
+        model,_ = optimize(model,weight_list_per_epoch,10,50,True)
+        model = my_delete_filters(model,weight_list_per_epoch,50,True)
         print('FINETUNING')
         model,history,weight_list_per_epoch = train(model,10)
    
     else:
         print('OPTIMIZATION')
-        model,_ =optimize(model,weight_list_per_epoch,50,10,False)
-        model = my_delete_filters(model,weight_list_per_epoch,10,False)
+        model,_ =optimize(model,weight_list_per_epoch,10,30,False)
+        model = my_delete_filters(model,weight_list_per_epoch,30,False)
         print('FINETUNING')
         model,history,weight_list_per_epoch = train(model,10)
 
