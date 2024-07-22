@@ -22,7 +22,7 @@ from kerassurgeon import identify
 from kerassurgeon.operations import delete_channels,delete_layer
 from kerassurgeon import Surgeon
 import os
-os.['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
 
 def my_get_all_conv_layers(model , first_time):
