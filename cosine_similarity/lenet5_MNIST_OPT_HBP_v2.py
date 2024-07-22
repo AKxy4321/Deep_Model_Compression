@@ -29,7 +29,7 @@ from kerassurgeon import Surgeon
 import os
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
-early_stopping = EarlyStopping(restore_best_weights=True, monitor="val_loss", patience=100)
+early_stopping = EarlyStopping(restore_best_weights=True, monitor="val_loss", patience=1000)
 
 def my_get_all_conv_layers(model , first_time):
 
