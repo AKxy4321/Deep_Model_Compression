@@ -31,7 +31,7 @@ my_get_cosine_similarity_filters
         
         for i in range(num_filters):
             similarities = cosine_similarity([filter_vectors[i]], filter_vectors)[0]
-            cosine_sum = np.sum(similarities)
+            cosine_sum = np.sum(similarities) - 1
             cosine_sums[index].append(cosine_sum)
             
     return cosine_sums

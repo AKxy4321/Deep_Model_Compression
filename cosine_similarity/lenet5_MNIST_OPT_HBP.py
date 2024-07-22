@@ -88,18 +88,20 @@ def my_get_l1_norms_filters_per_epoch(weight_list_per_epoch):
         Number of parmaters, Number of Flops
     '''
     
-    # weight_list_per_epoch = my_get_weights_in_conv_layers(model,first_time)
-    l1_norms_filters_per_epoch = list()
-    
+    cosine_similarities_filters_per_epoch = []
+    epochs = np.array(weight_list_per_epoch[0]).shape[0]
+    for weight_array in weight_list_per_epoch:
+        epoch_cosine_similarities = []
+        for epochs in weight_array:
+            num_filters = epochs.shape[3]
+            h, w, d = epochs.shape[0], epochs.shape[1], epochs.shape[2]
+            flattened_filters = epochs.reshape(-1, num_filters).T
+            cosine_sim = cosine_similarity(flattened_filters)
+            summed_cosine_similarities = np.sum(cosine_sim, axis=1) - 1
+            epoch_cosine_similarities.append(summed_cosine_similarities.tolist())
+        cosine_similarities_filters_per_epoch.append(np.array(epoch_cosine_similarities))
 
-    for index in range(len(weight_list_per_epoch)):
-
-        epochs = np.array(weight_list_per_epoch[index]).shape[0]
-        h , w , d = np.array(weight_list_per_epoch[index]).shape[1], np.array(weight_list_per_epoch[index]).shape[2] , np.array(weight_list_per_epoch[index]).shape[3]
-
-
-        l1_norms_filters_per_epoch.append(np.sum(np.abs(np.array(weight_list_per_epoch[index])).reshape(epochs,h*w*d,-1),axis=1))
-    return l1_norms_filters_per_epoch
+    return cosine_similarities_filters_per_epoch
 
 
 def my_in_conv_layers_get_sum_of_l1_norms_sorted_indices(weight_list_per_epoch):
@@ -462,17 +464,20 @@ def my_get_l1_norms_filters(model,first_time):
         Return:
             l1_norms of all filters of every layer as a list
     """
-    conv_layers = my_get_all_conv_layers(model,first_time)
-    l1_norms = list()
-    for index,layer_index in enumerate(conv_layers):
-        l1_norms.append([])
-        # print(layer_index)
+    conv_layers = my_get_all_conv_layers(model, first_time)
+    cosine_sums = list()
+    for index, layer_index in enumerate(conv_layers):
+        cosine_sums.append([])
         weights = model.layers[layer_index].get_weights()[0]
         num_filters = len(weights[0,0,0,:])
+        filter_vectors = [weights[:,:,:,i].flatten() for i in range(num_filters)]
+        
         for i in range(num_filters):
-            weights_sum = np.sum(abs(weights[:,:,:,i]))
-            l1_norms[index].append(weights_sum)
-    return l1_norms
+            similarities = cosine_similarity([filter_vectors[i]], filter_vectors)[0]
+            cosine_sum = np.sum(similarities) - 1
+            cosine_sums[index].append(cosine_sum)
+            
+    return cosine_sums
 
 
 def my_get_regularizer_value(model,weight_list_per_epoch,percentage,first_time):
