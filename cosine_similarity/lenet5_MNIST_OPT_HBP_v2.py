@@ -19,9 +19,8 @@ from keras import optimizers
 from keras.layers.core import Lambda
 from keras import backend as K
 from keras import regularizers
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, EarlyStopping
 from sklearn.metrics.pairwise import cosine_similarity
-
 
 # !pip install kerassurgeon
 from kerassurgeon import identify 
@@ -29,6 +28,8 @@ from kerassurgeon.operations import delete_channels, delete_layer
 from kerassurgeon import Surgeon
 import os
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
+
+early_stopping = EarlyStopping(restore_best_weights=True, monitor="val_loss", patience=100)
 
 def my_get_all_conv_layers(model , first_time):
 
@@ -388,7 +389,6 @@ def train(model,epochs,first_time):
     """
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
-
     img_rows, img_cols = 28, 28
     batch_size = 128
     num_classes = 10
@@ -407,12 +407,8 @@ def train(model,epochs,first_time):
     x_train /= 255
     x_test /= 255
 
-
-
-
     y_train = tf.keras.utils.to_categorical(y_train, num_classes)
     y_test = tf.keras.utils.to_categorical(y_test, num_classes)
-
 
     # Compile the model
     adam = optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, amsgrad=False)
@@ -424,12 +420,12 @@ def train(model,epochs,first_time):
             batch_size=batch_size,
             epochs=epochs,
             verbose=2,
-            callbacks=[gw],
+            callbacks=[gw, early_stopping],
             validation_data=(x_test, y_test))
 
     return model,history,gw.weight_list
 
-model,history,weight_list_per_epoch = train(model,10,True)
+model,history,weight_list_per_epoch = train(model,20,True)
 initial_flops = count_model_params_flops(model,True)[3]
 log_dict = dict()
 log_dict['train_loss'] = []
@@ -463,29 +459,6 @@ def custom_loss(lmbda , regularizer_value):
     # print(type(K.categorical_crossentropy(y_true ,y_pred)),K.categorical_crossentropy(y_true ,y_pred),regularizer_value)
     return K.categorical_crossentropy(y_true ,y_pred) + lmbda * regularizer_value
   return loss
-
-def my_get_l1_norms_filters(model,first_time):
-    """
-    Arguments:
-        model:
-
-        first_time : type boolean 
-            first_time = True => model is not pruned 
-            first_time = False => model is pruned
-        Return:
-            l1_norms of all filters of every layer as a list
-    """
-    conv_layers = my_get_all_conv_layers(model,first_time)
-    l1_norms = list()
-    for index,layer_index in enumerate(conv_layers):
-        l1_norms.append([])
-        # print(layer_index)
-        weights = model.layers[layer_index].get_weights()[0]
-        num_filters = len(weights[0,0,0,:])
-        for i in range(num_filters):
-            weights_sum = np.sum(weights[:,:,:,i])
-            l1_norms[index].append(weights_sum)
-    return l1_norms
 
 def my_get_cosine_similarity_filters(model, first_time):
     """
@@ -595,22 +568,20 @@ a,b,c,d = count_model_params_flops(model,False)
 print(a,b,c,d)
 while validation_accuracy - max_val_acc >= -0.01:
 
-
     print("ITERATION {} ".format(count+1))
     all_models.append(model)
     if max_val_acc < validation_accuracy:
         max_val_acc = validation_accuracy
         
-
     if count < 1:
-        optimize(model,weight_list_per_epoch,10,30,True)
+        optimize(model,weight_list_per_epoch,20,30,True)
         model = my_delete_filters(model,weight_list_per_epoch,30,True)
-        model,history,weight_list_per_epoch = train(model,10,False)
+        model,history,weight_list_per_epoch = train(model,20,False)
    
     else:
-        optimize(model,weight_list_per_epoch,10,15,False)
-        model = my_delete_filters(model,weight_list_per_epoch,15,False)
-        model,history,weight_list_per_epoch = train(model,10,False)
+        optimize(model,weight_list_per_epoch,20,30,False)
+        model = my_delete_filters(model,weight_list_per_epoch,30,False)
+        model,history,weight_list_per_epoch = train(model,20,False)
 
     a,b,c,d = count_model_params_flops(model,False)
     print(a,b,c,d)
@@ -657,7 +628,7 @@ model.summary()
 
 # model.summary()
 
-model,history,weight_list_per_epoch = train(model,60,False)
+model,history,weight_list_per_epoch = train(model,150,False)
 
 best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
 log_dict['train_loss'].append(history.history['loss'][best_acc_index])
