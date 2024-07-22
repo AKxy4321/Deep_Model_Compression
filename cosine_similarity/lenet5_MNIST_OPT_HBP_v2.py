@@ -327,6 +327,8 @@ def count_model_params_flops(model,first_time):
 
     total_params = 0
     total_flops = 0
+    conv_params = 0
+    conv_flops = 0
     model_layers = model.layers
     for index,layer in enumerate(model_layers):
         if any(conv_type in str(type(layer)) for conv_type in ['Conv1D', 'Conv2D', 'Conv3D']):
@@ -335,13 +337,15 @@ def count_model_params_flops(model,first_time):
             print(index,layer.name,params,flops)
             total_params += params
             total_flops += flops
+            conv += params
+            conv += flops
         elif 'Dense' in str(type(layer)):
             
             params, flops = count_dense_params_flops(layer)
             print(index,layer.name,params,flops)
             total_params += params
             total_flops += flops
-    return total_params, int(total_flops)
+    return conv_params, int(conv_flops), total_params, int(total_flops)
 
 class Get_Weights(Callback):
     def __init__(self,first_time):
@@ -426,12 +430,14 @@ def train(model,epochs,first_time):
     return model,history,gw.weight_list
 
 model,history,weight_list_per_epoch = train(model,10,True)
-initial_flops = count_model_params_flops(model,True)[1]
+initial_flops = count_model_params_flops(model,True)[3]
 log_dict = dict()
 log_dict['train_loss'] = []
 log_dict['train_acc'] = []
 log_dict['val_loss'] = []
 log_dict['val_acc'] = []
+log_dict['conv_params'] = []
+log_dict['conv_flops'] = []
 log_dict['total_params'] = []
 log_dict['total_flops'] = []
 log_dict['filters_in_conv1'] = []
@@ -442,9 +448,11 @@ log_dict['train_loss'].append(history.history['loss'][best_acc_index])
 log_dict['train_acc'].append(history.history['acc'][best_acc_index])
 log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
 log_dict['val_acc'].append(history.history['val_acc'][best_acc_index])
-a,b = count_model_params_flops(model,True)
-log_dict['total_params'].append(a)
-log_dict['total_flops'].append(b)
+a,b,c,d = count_model_params_flops(model,True)
+log_dict['conv_params'].append(a)
+log_dict['conv_flops'].append(b)
+log_dict['total_params'].append(c)
+log_dict['total_flops'].append(d)
 log_dict['filters_in_conv1'].append(model.layers[0].get_weights()[0].shape[-1])
 log_dict['filters_in_conv2'].append(model.layers[2].get_weights()[0].shape[-1])
 al = history
@@ -583,8 +591,8 @@ print("Initial Validation acc = {}".format(validation_accuracy) )
 max_val_acc = validation_accuracy
 count = 0
 all_models = list()
-a,b = count_model_params_flops(model,False)
-print(a,b)
+a,b,c,d = count_model_params_flops(model,False)
+print(a,b,c,d)
 while validation_accuracy - max_val_acc >= -0.01:
 
 
@@ -604,8 +612,8 @@ while validation_accuracy - max_val_acc >= -0.01:
         model = my_delete_filters(model,weight_list_per_epoch,30,False)
         model,history,weight_list_per_epoch = train(model,20,False)
 
-    a,b = count_model_params_flops(model,False)
-    print(a,b)
+    a,b,c,d = count_model_params_flops(model,False)
+    print(a,b,c,d)
     
     # al+=history
     validation_accuracy = max(history.history['val_acc'])
@@ -614,9 +622,11 @@ while validation_accuracy - max_val_acc >= -0.01:
     log_dict['train_acc'].append(history.history['acc'][best_acc_index])
     log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
     log_dict['val_acc'].append(history.history['val_acc'][best_acc_index])
-    a,b = count_model_params_flops(model,False)
-    log_dict['total_params'].append(a)
-    log_dict['total_flops'].append(b)
+    a,b,c,d = count_model_params_flops(model,False)
+    log_dict['conv_params'].append(a)
+    log_dict['conv_flops'].append(b)
+    log_dict['total_params'].append(c)
+    log_dict['total_flops'].append(d)
     log_dict['filters_in_conv1'].append(model.layers[1].get_weights()[0].shape[-1])
     log_dict['filters_in_conv2'].append(model.layers[3].get_weights()[0].shape[-1])
     print("VALIDATION acc AFTER {} ITERATIONS = {}".format(count+1,validation_accuracy))
@@ -654,9 +664,11 @@ log_dict['train_loss'].append(history.history['loss'][best_acc_index])
 log_dict['train_acc'].append(history.history['acc'][best_acc_index])
 log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
 log_dict['val_acc'].append(history.history['val_acc'][best_acc_index])
-a,b = count_model_params_flops(model,False)
-log_dict['total_params'].append(a)
-log_dict['total_flops'].append(b)
+a,b,c,d = count_model_params_flops(model,False)
+log_dict['conv_params'].append(a)
+log_dict['conv_flops'].append(b)
+log_dict['total_params'].append(c)
+log_dict['total_flops'].append(d)
 log_dict['filters_in_conv1'].append(model.layers[1].get_weights()[0].shape[-1])
 log_dict['filters_in_conv2'].append(model.layers[3].get_weights()[0].shape[-1])
 print("Final Validation acc = ",(max(history.history['val_acc'])*100))
