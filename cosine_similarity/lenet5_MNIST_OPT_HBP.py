@@ -23,16 +23,10 @@ from keras.callbacks import ModelCheckpoint
 
 
 
-
-
-
 # !pip install kerassurgeon
 from kerassurgeon import identify 
 from kerassurgeon.operations import delete_channels,delete_layer
 from kerassurgeon import Surgeon
-from sklearn.metrics.pairwise import cosine_similarity
-import os
-os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
 def my_get_all_conv_layers(model , first_time):
 
@@ -87,7 +81,7 @@ def my_get_weights_in_conv_layers(model,first_time):
     return weights
 
 
-def my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch):
+def my_get_l1_norms_filters_per_epoch(weight_list_per_epoch):
 
     '''
     Arguments:
@@ -97,25 +91,17 @@ def my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch):
     '''
     
     # weight_list_per_epoch = my_get_weights_in_conv_layers(model,first_time)
-    cosine_similarities_filers_per_epoch = list()
+    l1_norms_filters_per_epoch = list()
     
 
     for index in range(len(weight_list_per_epoch)):
-        epoch_weights = np.array(weight_list_per_epoch[index])
+
         epochs = np.array(weight_list_per_epoch[index]).shape[0]
-        h , w , d =  epoch_weights.shape[1],  epoch_weights.shape[2] , epoch_weights.shape[3]
-        
-        cosine_similarities_per_epoch=list()
-        
-        for epoch in range(epochs):
-            filters=epoch_weights[epoch].reshape(epoch_weights[epoch].shape[0], -1)
-            cosine_sim_matrix = cosine_similarity(filters)
-            sum_cosine_similarities=np.sum(cosine_sim_matrix,axis=1)
-            cosine_similarities_per_epoch.append(sum_cosine_similarities)
-            
-        cosine_similarities_filers_per_epoch.append(cosine_similarities_per_epoch)
-             
-    return np.array(cosine_similarities_per_epoch)
+        h , w , d = np.array(weight_list_per_epoch[index]).shape[1], np.array(weight_list_per_epoch[index]).shape[2] , np.array(weight_list_per_epoch[index]).shape[3]
+
+
+        l1_norms_filters_per_epoch.append(np.sum(np.abs(np.array(weight_list_per_epoch[index])).reshape(epochs,h*w*d,-1),axis=1))
+    return l1_norms_filters_per_epoch
 
 def my_in_conv_layers_get_sum_of_l1_norms_sorted_indices(weight_list_per_epoch):
     '''
@@ -127,7 +113,7 @@ def my_in_conv_layers_get_sum_of_l1_norms_sorted_indices(weight_list_per_epoch):
     '''
     layer_wise_filter_sorted_indices = list()
     layer_wise_filter_sorted_values = list()
-    l1_norms_filters_per_epoch = my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch)
+    l1_norms_filters_per_epoch = my_get_l1_norms_filters_per_epoch(weight_list_per_epoch)
     sum_l1_norms = list()
     
     for i in l1_norms_filters_per_epoch:
@@ -263,7 +249,7 @@ def my_delete_filters(model,weight_list_per_epoch,percentage,first_time):
         model_new:input model after pruning
 
     """
-    l1_norms = my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch)
+    l1_norms = my_get_l1_norms_filters_per_epoch(weight_list_per_epoch)
     distance_matrix_list = my_get_distance_matrix_list(l1_norms)
     episodes_for_all_layers = my_get_episodes_for_all_layers(distance_matrix_list,percentage)
     filter_pruning_indices = my_get_filter_pruning_indices(episodes_for_all_layers,l1_norms)
@@ -419,9 +405,9 @@ def train(model,epochs,first_time):
 
 
     # Compile the model
-    adam = optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, amsgrad=False)
+    adam = optimizers.Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, amsgrad=False)
     sgd = optimizers.SGD(lr=0.05, decay=1e-6, momentum=0.9, nesterov=True)
-    model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['acc']) 
+    model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy']) 
 
     gw = Get_Weights(first_time)
     history = model.fit(x_train, y_train,
@@ -445,11 +431,11 @@ log_dict['total_flops'] = []
 log_dict['filters_in_conv1'] = []
 log_dict['filters_in_conv2'] = []
 
-best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
+best_acc_index = history.history['val_accuracy'].index(max(history.history['val_accuracy']))
 log_dict['train_loss'].append(history.history['loss'][best_acc_index])
-log_dict['train_acc'].append(history.history['acc'][best_acc_index])
+log_dict['train_acc'].append(history.history['accuracy'][best_acc_index])
 log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
-log_dict['val_acc'].append(history.history['val_acc'][best_acc_index])
+log_dict['val_acc'].append(history.history['val_accuracy'][best_acc_index])
 a,b = count_model_params_flops(model,True)
 log_dict['total_params'].append(a)
 log_dict['total_flops'].append(b)
@@ -498,13 +484,12 @@ def my_get_regularizer_value(model,weight_list_per_epoch,percentage,first_time):
     Return:
         regularizer_value
     """
-    l1_norms_per_epoch = my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch)
+    l1_norms_per_epoch = my_get_l1_norms_filters_per_epoch(weight_list_per_epoch)
     distance_matrix_list = my_get_distance_matrix_list(l1_norms_per_epoch)
     episodes_for_all_layers = my_get_episodes_for_all_layers(distance_matrix_list,percentage)
     l1_norms = my_get_l1_norms_filters(model,first_time)
     print(episodes_for_all_layers)
     regularizer_value = 0
-    
     for layer_index,layer in enumerate(episodes_for_all_layers):
         for episode in layer:
             # print(episode[1],episode[0])
@@ -551,8 +536,8 @@ def optimize(model,weight_list_per_epoch,epochs,percentage,first_time):
     print("INITIAL REGULARIZER VALUE ",my_get_regularizer_value(model,weight_list_per_epoch,percentage,first_time))
     model_loss = custom_loss(lmbda= 0.1 , regularizer_value=regularizer_value)
     # print('model loss',model_loss)
-    adam = optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, amsgrad=False)
-    model.compile(loss=model_loss,optimizer=adam,metrics=['acc'])
+    adam = optimizers.Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, amsgrad=False)
+    model.compile(loss=model_loss,optimizer=adam,metrics=['accuracy'])
 
     history = model.fit(x_train , y_train,epochs=epochs,batch_size = batch_size,validation_data=(x_test, y_test),verbose=1)
     print("FINAL REGULARIZER VALUE ",my_get_regularizer_value(model,weight_list_per_epoch,percentage,first_time))
@@ -560,11 +545,11 @@ def optimize(model,weight_list_per_epoch,epochs,percentage,first_time):
 
 count_model_params_flops(model,True)
 
-print('Validation acc ',max(history.history['val_acc']))
+print('Validation accuracy ',max(history.history['val_accuracy']))
 
-#stop pruning if the acc drops by 5% from maximum acc ever obtained. 
-validation_accuracy = max(history.history['val_acc'])
-print("Initial Validation acc = {}".format(validation_accuracy) )
+#stop pruning if the accuracy drops by 5% from maximum accuracy ever obtained. 
+validation_accuracy = max(history.history['val_accuracy'])
+print("Initial Validation Accuracy = {}".format(validation_accuracy) )
 max_val_acc = validation_accuracy
 count = 0
 all_models = list()
@@ -593,23 +578,23 @@ while validation_accuracy - max_val_acc >= -0.01 and  count < 3:
     print(a,b)
     
     al+=history
-    validation_accuracy = max(history.history['val_acc'])
-    best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
+    validation_accuracy = max(history.history['val_accuracy'])
+    best_acc_index = history.history['val_accuracy'].index(max(history.history['val_accuracy']))
     log_dict['train_loss'].append(history.history['loss'][best_acc_index])
-    log_dict['train_acc'].append(history.history['acc'][best_acc_index])
+    log_dict['train_acc'].append(history.history['accuracy'][best_acc_index])
     log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
-    log_dict['val_acc'].append(history.history['val_acc'][best_acc_index])
+    log_dict['val_acc'].append(history.history['val_accuracy'][best_acc_index])
     a,b = count_model_params_flops(model,False)
     log_dict['total_params'].append(a)
     log_dict['total_flops'].append(b)
     log_dict['filters_in_conv1'].append(model.layers[1].get_weights()[0].shape[-1])
     log_dict['filters_in_conv2'].append(model.layers[3].get_weights()[0].shape[-1])
-    print("VALIDATION acc AFTER {} ITERATIONS = {}".format(count+1,validation_accuracy))
+    print("VALIDATION ACCURACY AFTER {} ITERATIONS = {}".format(count+1,validation_accuracy))
     count+=1
 
 model.summary()
 
-l1_norms = my_get_cosine_similarity_filters_per_epoch(weight_list_per_epoch)
+l1_norms = my_get_l1_norms_filters_per_epoch(weight_list_per_epoch)
 distance_matrix_list = my_get_distance_matrix_list(l1_norms)
 episodes_for_all_layers = my_get_episodes_for_all_layers(distance_matrix_list,95)
 print(episodes_for_all_layers)
@@ -629,20 +614,20 @@ model.summary()
 
 model,history,weight_list_per_epoch = train(model,60,False)
 
-best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
+best_acc_index = history.history['val_accuracy'].index(max(history.history['val_accuracy']))
 log_dict['train_loss'].append(history.history['loss'][best_acc_index])
-log_dict['train_acc'].append(history.history['acc'][best_acc_index])
+log_dict['train_acc'].append(history.history['accuracy'][best_acc_index])
 log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
-log_dict['val_acc'].append(history.history['val_acc'][best_acc_index])
+log_dict['val_acc'].append(history.history['val_accuracy'][best_acc_index])
 a,b = count_model_params_flops(model,False)
 log_dict['total_params'].append(a)
 log_dict['total_flops'].append(b)
 log_dict['filters_in_conv1'].append(model.layers[1].get_weights()[0].shape[-1])
 log_dict['filters_in_conv2'].append(model.layers[3].get_weights()[0].shape[-1])
-print("Final Validation acc = ",(max(history.history['val_acc'])*100))
+print("Final Validation Accuracy = ",(max(history.history['val_accuracy'])*100))
 
 log_df = pd.DataFrame(log_dict)
 log_df
 
-log_df.to_csv(os.path.join('.', 'results', 'lenet5.csv'))
+log_df.to_csv('/content/drive/My Drive/paper results/SS3.csv')
 

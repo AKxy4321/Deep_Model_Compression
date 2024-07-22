@@ -100,8 +100,7 @@ def my_get_l1_norms_filters_per_epoch(weight_list_per_epoch):
         h , w , d = np.array(weight_list_per_epoch[index]).shape[1], np.array(weight_list_per_epoch[index]).shape[2] , np.array(weight_list_per_epoch[index]).shape[3]
 
 
-        l1_norms_per_epoch = np.sum(np.abs(weight_list_per_epoch[index]), axis=(1, 2, 3)).reshape(epochs, -1)
-        l1_norms_filters_per_epoch.append(l1_norms_per_epoch)
+        l1_norms_filters_per_epoch.append(np.sum(np.abs(np.array(weight_list_per_epoch[index])).reshape(epochs,h*w*d,-1),axis=1))
     return l1_norms_filters_per_epoch
 
 def my_in_conv_layers_get_sum_of_l1_norms_sorted_indices(weight_list_per_epoch):
@@ -406,9 +405,9 @@ def train(model,epochs,first_time):
 
 
     # Compile the model
-    adam = optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, amsgrad=False)
+    adam = optimizers.Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, amsgrad=False)
     sgd = optimizers.SGD(lr=0.05, decay=1e-6, momentum=0.9, nesterov=True)
-    model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['acc']) 
+    model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy']) 
 
     gw = Get_Weights(first_time)
     history = model.fit(x_train, y_train,
@@ -432,11 +431,11 @@ log_dict['total_flops'] = []
 log_dict['filters_in_conv1'] = []
 log_dict['filters_in_conv2'] = []
 
-best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
+best_acc_index = history.history['val_accuracy'].index(max(history.history['val_accuracy']))
 log_dict['train_loss'].append(history.history['loss'][best_acc_index])
-log_dict['train_acc'].append(history.history['acc'][best_acc_index])
+log_dict['train_acc'].append(history.history['accuracy'][best_acc_index])
 log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
-log_dict['val_acc'].append(history.history['val_acc'][best_acc_index])
+log_dict['val_acc'].append(history.history['val_accuracy'][best_acc_index])
 a,b = count_model_params_flops(model,True)
 log_dict['total_params'].append(a)
 log_dict['total_flops'].append(b)
@@ -537,8 +536,8 @@ def optimize(model,weight_list_per_epoch,epochs,percentage,first_time):
     print("INITIAL REGULARIZER VALUE ",my_get_regularizer_value(model,weight_list_per_epoch,percentage,first_time))
     model_loss = custom_loss(lmbda= 0.1 , regularizer_value=regularizer_value)
     # print('model loss',model_loss)
-    adam = optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, amsgrad=False)
-    model.compile(loss=model_loss,optimizer=adam,metrics=['acc'])
+    adam = optimizers.Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, amsgrad=False)
+    model.compile(loss=model_loss,optimizer=adam,metrics=['accuracy'])
 
     history = model.fit(x_train , y_train,epochs=epochs,batch_size = batch_size,validation_data=(x_test, y_test),verbose=1)
     print("FINAL REGULARIZER VALUE ",my_get_regularizer_value(model,weight_list_per_epoch,percentage,first_time))
@@ -546,11 +545,11 @@ def optimize(model,weight_list_per_epoch,epochs,percentage,first_time):
 
 count_model_params_flops(model,True)
 
-print('Validation acc ',max(history.history['val_acc']))
+print('Validation accuracy ',max(history.history['val_accuracy']))
 
-#stop pruning if the acc drops by 5% from maximum acc ever obtained. 
-validation_accuracy = max(history.history['val_acc'])
-print("Initial Validation acc = {}".format(validation_accuracy) )
+#stop pruning if the accuracy drops by 5% from maximum accuracy ever obtained. 
+validation_accuracy = max(history.history['val_accuracy'])
+print("Initial Validation Accuracy = {}".format(validation_accuracy) )
 max_val_acc = validation_accuracy
 count = 0
 all_models = list()
@@ -579,18 +578,18 @@ while validation_accuracy - max_val_acc >= -0.01 and  count < 3:
     print(a,b)
     
     al+=history
-    validation_accuracy = max(history.history['val_acc'])
-    best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
+    validation_accuracy = max(history.history['val_accuracy'])
+    best_acc_index = history.history['val_accuracy'].index(max(history.history['val_accuracy']))
     log_dict['train_loss'].append(history.history['loss'][best_acc_index])
-    log_dict['train_acc'].append(history.history['acc'][best_acc_index])
+    log_dict['train_acc'].append(history.history['accuracy'][best_acc_index])
     log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
-    log_dict['val_acc'].append(history.history['val_acc'][best_acc_index])
+    log_dict['val_acc'].append(history.history['val_accuracy'][best_acc_index])
     a,b = count_model_params_flops(model,False)
     log_dict['total_params'].append(a)
     log_dict['total_flops'].append(b)
     log_dict['filters_in_conv1'].append(model.layers[1].get_weights()[0].shape[-1])
     log_dict['filters_in_conv2'].append(model.layers[3].get_weights()[0].shape[-1])
-    print("VALIDATION acc AFTER {} ITERATIONS = {}".format(count+1,validation_accuracy))
+    print("VALIDATION ACCURACY AFTER {} ITERATIONS = {}".format(count+1,validation_accuracy))
     count+=1
 
 model.summary()
@@ -615,17 +614,17 @@ model.summary()
 
 model,history,weight_list_per_epoch = train(model,60,False)
 
-best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
+best_acc_index = history.history['val_accuracy'].index(max(history.history['val_accuracy']))
 log_dict['train_loss'].append(history.history['loss'][best_acc_index])
-log_dict['train_acc'].append(history.history['acc'][best_acc_index])
+log_dict['train_acc'].append(history.history['accuracy'][best_acc_index])
 log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
-log_dict['val_acc'].append(history.history['val_acc'][best_acc_index])
+log_dict['val_acc'].append(history.history['val_accuracy'][best_acc_index])
 a,b = count_model_params_flops(model,False)
 log_dict['total_params'].append(a)
 log_dict['total_flops'].append(b)
 log_dict['filters_in_conv1'].append(model.layers[1].get_weights()[0].shape[-1])
 log_dict['filters_in_conv2'].append(model.layers[3].get_weights()[0].shape[-1])
-print("Final Validation acc = ",(max(history.history['val_acc'])*100))
+print("Final Validation Accuracy = ",(max(history.history['val_accuracy'])*100))
 
 log_df = pd.DataFrame(log_dict)
 log_df

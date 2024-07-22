@@ -1,0 +1,37 @@
+cosine_similarity_filters_per_epoch
+
+
+    cosine_similarities_filters_per_epoch = []
+    epochs = np.array(weight_list_per_epoch[0]).shape[0]
+    for weight_array in weight_list_per_epoch:
+        epoch_cosine_similarities = []
+        for epochs in weight_array:
+            num_filters = epochs.shape[3]
+            h, w, d = epochs.shape[0], epochs.shape[1], epochs.shape[2]
+            flattened_filters = epochs.reshape(-1, num_filters).T
+            cosine_sim = cosine_similarity(flattened_filters)
+            summed_cosine_similarities = np.sum(cosine_sim, axis=1) - 1
+            epoch_cosine_similarities.append(summed_cosine_similarities.tolist())
+        cosine_similarities_filters_per_epoch.append(np.array(epoch_cosine_similarities))
+
+    return cosine_similarities_filters_per_epoch
+
+
+
+my_get_cosine_similarity_filters
+
+
+    conv_layers = my_get_all_conv_layers(model, first_time)
+    cosine_sums = list()
+    for index, layer_index in enumerate(conv_layers):
+        cosine_sums.append([])
+        weights = model.layers[layer_index].get_weights()[0]
+        num_filters = len(weights[0,0,0,:])
+        filter_vectors = [weights[:,:,:,i].flatten() for i in range(num_filters)]
+        
+        for i in range(num_filters):
+            similarities = cosine_similarity([filter_vectors[i]], filter_vectors)[0]
+            cosine_sum = np.sum(similarities)
+            cosine_sums[index].append(cosine_sum)
+            
+    return cosine_sums

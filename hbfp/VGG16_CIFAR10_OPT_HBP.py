@@ -34,7 +34,6 @@ from sklearn import preprocessing
 from kerassurgeon import identify 
 from kerassurgeon.operations import delete_channels,delete_layer
 from kerassurgeon import Surgeon
-import os
 
 def my_get_all_conv_layers(model , first_time):
 
@@ -188,8 +187,7 @@ def my_get_l1_norms_filters_per_epoch(weight_list_per_epoch):
         h , w , d = np.array(weight_list_per_epoch[index]).shape[1], np.array(weight_list_per_epoch[index]).shape[2] , np.array(weight_list_per_epoch[index]).shape[3]
 
 
-        l1_norms_per_epoch = np.sum(np.abs(weight_list_per_epoch[index]), axis=(1, 2, 3)).reshape(epochs, -1)
-        l1_norms_filters_per_epoch.append(l1_norms_per_epoch)
+        l1_norms_filters_per_epoch.append(np.sum(np.abs(np.array(weight_list_per_epoch[index])).reshape(epochs,h*w*d,-1),axis=1))
     return l1_norms_filters_per_epoch
 
 def my_in_conv_layers_get_sum_of_l1_norms_sorted_indices(weight_list_per_epoch):
@@ -382,7 +380,7 @@ class cifar10vgg:
         else:
             #change
 
-            self.model.load_weights(os.path.join('.', 'models', 'vgg16_cifar10.h5'))
+            self.model.load_weights('/home/shabbeer/Research/BTP_Pruning/1_best_vgg16_cifar10.h5')
 
 
     def build_model(self):
@@ -530,7 +528,7 @@ class cifar10vgg:
 
         #optimization details
         sgd = optimizers.SGD(lr=learning_rate, decay=lr_decay, momentum=0.9, nesterov=True)
-        model.compile(loss='categorical_crossentropy', optimizer=sgd,metrics=['acc'])
+        model.compile(loss='categorical_crossentropy', optimizer=sgd,metrics=['accuracy'])
 
         gw = Get_Weights(self.first_time)
 
@@ -610,7 +608,7 @@ def train(model,epochs):
 
     #optimization details
     sgd = optimizers.SGD(lr=learning_rate, decay=lr_decay, momentum=0.9, nesterov=True)
-    model.compile(loss='categorical_crossentropy', optimizer=sgd,metrics=['acc'])
+    model.compile(loss='categorical_crossentropy', optimizer=sgd,metrics=['accuracy'])
 
     gw = Get_Weights(False)
 
@@ -734,7 +732,7 @@ def optimize(model,weight_list_per_epoch,epochs,percentage,first_time):
     print("INITIAL REGULARIZER VALUE ",my_get_regularizer_value(model,weight_list_per_epoch,percentage,first_time))
     model_loss = custom_loss(lmbda= 0.1 , regularizer_value=regularizer_value)
     sgd = optimizers.SGD(lr=learning_rate, decay=lr_decay, momentum=0.9, nesterov=True)
-    model.compile(loss=model_loss, optimizer=sgd,metrics=['acc'])
+    model.compile(loss=model_loss, optimizer=sgd,metrics=['accuracy'])
     
     history = model.fit_generator(datagen.flow(x_train, y_train,
                                         batch_size=batch_size),
@@ -767,10 +765,10 @@ if choice == 'Y':
     reduce_lr = keras.callbacks.LearningRateScheduler(lr_scheduler)
 
     sgd = optimizers.SGD(lr=learning_rate, decay=lr_decay, momentum=0.9, nesterov=True)
-    model.compile(loss='categorical_crossentropy', optimizer=sgd,metrics=['acc'])
+    model.compile(loss='categorical_crossentropy', optimizer=sgd,metrics=['accuracy'])
 
     weight_list_per_epoch = list()
-    data = np.load("./1.npz")
+    data = np.load("/home/shabbeer/Research/BTP_Pruning/1.npz")
     for i in range(13):
         weight_list_per_epoch.append(data['w_{}'.format(i+1)])
 
@@ -791,7 +789,7 @@ elif choice == 'N':
     my_vgg = cifar10vgg(first_time=True,epochs=250)
     model, history ,weight_list_per_epoch= my_vgg.model, my_vgg.history, my_vgg.weight_list_per_epoch
 
-    model.save_weights(os.path.join('.', 'models', 'vgg16_cifar10.h5'))
+    model.save_weights('./3_best_vgg16_cifar10.h5')
     #save the weights of training process
     np.savez("./3.npz"
             ,w_1=weight_list_per_epoch[0],
@@ -819,11 +817,11 @@ log_dict['total_params'].append(a)
 log_dict['total_flops'].append(b)
 
 log_df = pd.DataFrame(log_dict)
-log_df.to_csv('./2_HBP_OPT.csv')
+log_df.to_csv('/home/shabbeer/Research/BTP_Pruning/2_HBP_OPT.csv')
 
-#stop pruning if the acc drops by 5% from maximum acc ever obtained. 
+#stop pruning if the accuracy drops by 5% from maximum accuracy ever obtained. 
 
-print("Initial Validation acc = {}".format(validation_accuracy) )
+print("Initial Validation Accuracy = {}".format(validation_accuracy) )
 max_val_acc = validation_accuracy
 count = 0
 
@@ -870,9 +868,9 @@ while validation_accuracy - max_val_acc >= -0.02 :
     log_dict['total_params'].append(a)
     log_dict['total_flops'].append(b)
     log_df = pd.DataFrame(log_dict)
-    log_df.to_csv('./2_HBP_OPT.csv')
-    print("VALIDATION acc AFTER {} ITERATIONS = {}".format(count+1,validation_accuracy))
+    log_df.to_csv('/home/shabbeer/Research/BTP_Pruning/2_HBP_OPT.csv')
+    print("VALIDATION ACCURACY AFTER {} ITERATIONS = {}".format(count+1,validation_accuracy))
     count+=1
 
 log_df = pd.DataFrame(log_dict)
-log_df.to_csv('/2_HBP_OPT.csv')
+log_df.to_csv('/home/shabbeer/Research/BTP_Pruning/2_HBP_OPT.csv')
