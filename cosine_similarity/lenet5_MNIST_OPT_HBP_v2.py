@@ -98,7 +98,9 @@ def my_get_l1_norms_filters_per_epoch(weight_list_per_epoch):
         h , w , d = np.array(weight_list_per_epoch[index]).shape[1], np.array(weight_list_per_epoch[index]).shape[2] , np.array(weight_list_per_epoch[index]).shape[3]
 
 
-        l1_norms_filters_per_epoch.append(np.sum(np.array(weight_list_per_epoch[index])).reshape(epochs,h*w*d,-1),axis=1)
+        l1_norms_filters_per_epoch.append(np.sum(np.array(weight_list_per_epoch[index]).reshape(epochs,h*w*d,-1),axis=1))
+
+    print(l1_norms_filters_per_epoch)
     return l1_norms_filters_per_epoch
 
 
@@ -561,7 +563,7 @@ print(a,b)
 ###################  Model Pruning
 #######################################################################
 
-while validation_accuracy - max_val_acc >= -0.01 and  count < 3:
+while validation_accuracy - max_val_acc >= -0.01:
 
 
     print("ITERATION {} ".format(count+1))
@@ -583,7 +585,7 @@ while validation_accuracy - max_val_acc >= -0.01 and  count < 3:
     a,b = count_model_params_flops(model,False)
     print(a,b)
     
-    al+=history
+    # al+=history
     validation_accuracy = max(history.history['val_accuracy'])
     best_acc_index = history.history['val_accuracy'].index(max(history.history['val_accuracy']))
     log_dict['train_loss'].append(history.history['loss'][best_acc_index])

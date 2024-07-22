@@ -1,6 +1,6 @@
 tensorflow_gpu==1.15.0
 keras==2.3.1
-numpy==1.18.1
+numpy
 tensorflow==1.15.0
 scikit-learn
 matplotlib
