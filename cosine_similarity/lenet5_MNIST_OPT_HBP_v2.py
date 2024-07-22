@@ -624,23 +624,28 @@ while validation_accuracy - max_val_acc >= -0.01:
 
 model.summary()
 
-l1_norms = my_get_l1_norms_filters_per_epoch(weight_list_per_epoch)
-distance_matrix_list = my_get_distance_matrix_list(l1_norms)
-episodes_for_all_layers = my_get_episodes_for_all_layers(distance_matrix_list,95)
-print(episodes_for_all_layers)
-filter_pruning_indices = my_get_filter_pruning_indices(episodes_for_all_layers,l1_norms)
-print(filter_pruning_indices[0],filter_pruning_indices[1])
 
-optimize(model,weight_list_per_epoch,20,40,False)
+##############################################################################################
+########### FINAL OPTIMISATION
+##############################################################################################
 
-# all_conv_layers = my_get_all_conv_layers(model,first_time)
+# l1_norms = my_get_l1_norms_filters_per_epoch(weight_list_per_epoch)
+# distance_matrix_list = my_get_distance_matrix_list(l1_norms)
+# episodes_for_all_layers = my_get_episodes_for_all_layers(distance_matrix_list,95)
+# print(episodes_for_all_layers)
+# filter_pruning_indices = my_get_filter_pruning_indices(episodes_for_all_layers,l1_norms)
+# print(filter_pruning_indices[0],filter_pruning_indices[1])
 
-surgeon = Surgeon(model)
-surgeon.add_job('delete_channels',model.layers[1],channels = filter_pruning_indices[0][:1])
-surgeon.add_job('delete_channels',model.layers[3],channels =filter_pruning_indices[1][:1])
-model = surgeon.operate()
+# optimize(model,weight_list_per_epoch,20,40,False)
 
-model.summary()
+# # all_conv_layers = my_get_all_conv_layers(model,first_time)
+
+# surgeon = Surgeon(model)
+# surgeon.add_job('delete_channels',model.layers[1],channels = filter_pruning_indices[0][:1])
+# surgeon.add_job('delete_channels',model.layers[3],channels =filter_pruning_indices[1][:1])
+# model = surgeon.operate()
+
+# model.summary()
 
 model,history,weight_list_per_epoch = train(model,60,False)
 
