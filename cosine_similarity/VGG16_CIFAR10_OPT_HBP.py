@@ -490,7 +490,7 @@ class cifar10vgg:
         #training parameters
         batch_size = 128
         maxepoches = 10
-        learning_rate = 0.001
+        learning_rate = 0.01
         lr_decay = 1e-6
         lr_drop = 20
         # The data, shuffled and split between train and test sets:
@@ -773,7 +773,7 @@ if choice == 'Y':
 
     ###############################################################
     # Training Model in Parts
-    # my_vgg.epochs = 75
+    # my_vgg.epochs = 50
     # model, history ,train_weight_list_per_epoch = my_vgg.train(model)
     # my_vgg.model.save_weights(os.path.join('.', 'models', 'cifar10vgg.h5'))
     # print("Model is Saved")
@@ -850,7 +850,7 @@ print("Initial Validation acc = {}".format(validation_accuracy) )
 max_val_acc = validation_accuracy
 count = 0
 
-while validation_accuracy - max_val_acc >= -0.01 :
+while validation_accuracy - max_val_acc >= -0.02 :
     print("ITERATION {} ".format(count+1))
     
     if max_val_acc < validation_accuracy:
@@ -858,15 +858,15 @@ while validation_accuracy - max_val_acc >= -0.01 :
         
     if count < 1:
         print('OPTIMIZATION')
-        model,_ = optimize(model,weight_list_per_epoch,10,50,True)
-        model = my_delete_filters(model,weight_list_per_epoch,50,True)
+        model,_ = optimize(model,weight_list_per_epoch,10,30,True)
+        model = my_delete_filters(model,weight_list_per_epoch,30,True)
         print('FINETUNING')
         model,history,weight_list_per_epoch = train(model,10)
    
     else:
         print('OPTIMIZATION')
-        model,_ =optimize(model,weight_list_per_epoch,10,30,False)
-        model = my_delete_filters(model,weight_list_per_epoch,30,False)
+        model,_ =optimize(model,weight_list_per_epoch,10,15,False)
+        model = my_delete_filters(model,weight_list_per_epoch,15,False)
         print('FINETUNING')
         model,history,weight_list_per_epoch = train(model,10)
 

@@ -483,6 +483,30 @@ def my_get_l1_norms_filters(model,first_time):
             l1_norms[index].append(weights_sum)
     return l1_norms
 
+def my_get_cosine_similarity_filters(model, first_time):
+    """
+    Arguments:
+        model:
+
+        first_time : type boolean 
+            first_time = True => model is not pruned 
+            first_time = False => model is pruned
+        Return:
+            Cosine similarity sums of all filters of every layer as a list
+    """
+    conv_layers = my_get_all_conv_layers(model, first_time)
+    cosine_sums = list()
+    for index, layer_index in enumerate(conv_layers):
+        cosine_sums.append([])
+        weights = model.layers[layer_index].get_weights()[0]
+        num_filters = len(weights[0,0,0,:])
+        filter_vectors = [weights[:,:,:,i].flatten() for i in range(num_filters)]
+        
+        for i in range(num_filters):
+            similarities = cosine_similarity([filter_vectors[i]], filter_vectors)[0]
+            cosine_sum = np.sum(similarities)
+            cosine_sums[index].append(cosine_sum)
+    return cosine_sums
 
 def my_get_regularizer_value(model,weight_list_per_epoch,percentage,first_time):
     """
@@ -497,7 +521,7 @@ def my_get_regularizer_value(model,weight_list_per_epoch,percentage,first_time):
     l1_norms_per_epoch = my_get_l1_norms_filters_per_epoch(weight_list_per_epoch)
     distance_matrix_list = my_get_distance_matrix_list(l1_norms_per_epoch)
     episodes_for_all_layers = my_get_episodes_for_all_layers(distance_matrix_list,percentage)
-    l1_norms = my_get_l1_norms_filters(model,first_time)
+    l1_norms = my_get_cosine_similarity_filters(model,first_time)
     print(episodes_for_all_layers)
     regularizer_value = 0
     for layer_index,layer in enumerate(episodes_for_all_layers):
