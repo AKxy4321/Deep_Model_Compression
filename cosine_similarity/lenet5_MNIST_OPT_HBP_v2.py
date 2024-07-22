@@ -18,6 +18,7 @@ from keras.layers.core import Lambda
 from keras import backend as K
 from keras import regularizers
 from keras.callbacks import ModelCheckpoint
+from sklearn.metrics.pairwise import cosine_similarity
 
 # !pip install kerassurgeon
 from kerassurgeon import identify 
@@ -100,7 +101,6 @@ def my_get_l1_norms_filters_per_epoch(weight_list_per_epoch):
 
         l1_norms_filters_per_epoch.append(np.sum(np.array(weight_list_per_epoch[index]).reshape(epochs,h*w*d,-1),axis=1))
 
-    print(l1_norms_filters_per_epoch)
     return l1_norms_filters_per_epoch
 
 
