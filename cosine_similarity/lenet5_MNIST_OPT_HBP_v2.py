@@ -337,8 +337,8 @@ def count_model_params_flops(model,first_time):
             print(index,layer.name,params,flops)
             total_params += params
             total_flops += flops
-            conv += params
-            conv += flops
+            conv_params += params
+            conv_flops += flops
         elif 'Dense' in str(type(layer)):
             
             params, flops = count_dense_params_flops(layer)
