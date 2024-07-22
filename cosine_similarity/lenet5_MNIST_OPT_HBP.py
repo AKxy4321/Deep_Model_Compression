@@ -1,5 +1,3 @@
-# %tensorflow_version 1.x
-# !pip install tesnsorflow 1.x
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -21,12 +19,13 @@ from keras import backend as K
 from keras import regularizers
 from keras.callbacks import ModelCheckpoint
 
-
-
 # !pip install kerassurgeon
 from kerassurgeon import identify 
 from kerassurgeon.operations import delete_channels,delete_layer
 from kerassurgeon import Surgeon
+import os
+os.['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
+
 
 def my_get_all_conv_layers(model , first_time):
 
@@ -59,7 +58,6 @@ def my_get_all_dense_layers(model):
         if (each_layer.name[0:5] == 'dense'):
             all_dense_layers.append(i)
     return all_dense_layers
-
 
 
 def my_get_weights_in_conv_layers(model,first_time):
@@ -103,6 +101,7 @@ def my_get_l1_norms_filters_per_epoch(weight_list_per_epoch):
         l1_norms_filters_per_epoch.append(np.sum(np.abs(np.array(weight_list_per_epoch[index])).reshape(epochs,h*w*d,-1),axis=1))
     return l1_norms_filters_per_epoch
 
+
 def my_in_conv_layers_get_sum_of_l1_norms_sorted_indices(weight_list_per_epoch):
     '''
         Arguments:
@@ -140,6 +139,7 @@ def my_get_percent_prune_filter_indices(layer_wise_filter_sorted_indices,percent
         prune_filter_indices.append(int(len(layer_wise_filter_sorted_indices[i]) * (percentage/100)))
     return prune_filter_indices
 
+
 def my_get_distance_matrix(l1_norm_matrix):
     """
     Arguments:
@@ -154,6 +154,7 @@ def my_get_distance_matrix(l1_norm_matrix):
             distance_matrix[i].append(np.sum((v1-v2)**2))
     return np.array(distance_matrix)
     
+
 def my_get_distance_matrix_list(l1_norm_matrix_list):
     """
     Arguments:
@@ -165,7 +166,6 @@ def my_get_distance_matrix_list(l1_norm_matrix_list):
     for l1_norm_matrix in l1_norm_matrix_list:
         distance_matrix_list.append(my_get_distance_matrix(l1_norm_matrix.T))
     return distance_matrix_list
-
 
 
 def my_get_episodes(distance_matrix,percentage):
@@ -233,7 +233,6 @@ def my_get_filter_pruning_indices(episodes_for_all_layers,l1_norm_matrix_list):
         filter_pruning_indices.append(a)
     return filter_pruning_indices
 
-
     
 def my_delete_filters(model,weight_list_per_epoch,percentage,first_time):
     """
@@ -280,8 +279,6 @@ def count_conv_params_flops(conv_layer):
     # print(n_conv_params_total,len(conv_layer.get_weights()[0]),)
     conv_flops = 2 * (n_conv_params_total * n_cells_total - len(conv_layer.get_weights()[1]) *n_cells_total)
 
- 
-
     return n_conv_params_total, conv_flops
 
 
@@ -301,10 +298,7 @@ def count_dense_params_flops(dense_layer):
 
     dense_flops = 2* (n_dense_params_total - len(dense_layer.get_weights()[1]) * n_cells_total)
 
-
     return n_dense_params_total, dense_flops
-
-
 
 
 def count_model_params_flops(model,first_time):
@@ -337,6 +331,7 @@ def count_model_params_flops(model,first_time):
             total_flops += flops
     return total_params, int(total_flops)
 
+
 class Get_Weights(Callback):
     def __init__(self,first_time):
         super(Get_Weights, self).__init__()
@@ -350,6 +345,11 @@ class Get_Weights(Callback):
         
         for index,each_weight in enumerate(my_get_weights_in_conv_layers(self.model,self.first_time)):
                 self.weight_list[index].append(each_weight)
+
+
+#######################################################################
+###################  Model Building
+#######################################################################
 
 model = keras.Sequential()
 
@@ -365,6 +365,7 @@ model.add(Dense(units=500, activation='relu'))
 
 model.add(Dense(units=10, activation = 'softmax'))
 
+
 def train(model,epochs,first_time):
     """
     Arguments:
@@ -377,7 +378,6 @@ def train(model,epochs,first_time):
         weight_list_per_epoch = all weight tensors per epochs in a list
     """
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
-
 
     img_rows, img_cols = 28, 28
     batch_size = 128
@@ -397,14 +397,9 @@ def train(model,epochs,first_time):
     x_train /= 255
     x_test /= 255
 
-
-
-
     y_train = tf.keras.utils.to_categorical(y_train, num_classes)
     y_test = tf.keras.utils.to_categorical(y_test, num_classes)
 
-
-    # Compile the model
     adam = optimizers.Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, amsgrad=False)
     sgd = optimizers.SGD(lr=0.05, decay=1e-6, momentum=0.9, nesterov=True)
     model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy']) 
@@ -418,6 +413,11 @@ def train(model,epochs,first_time):
             validation_data=(x_test, y_test))
 
     return model,history,gw.weight_list
+
+
+#######################################################################
+###################  Model Training
+#######################################################################
 
 model,history,weight_list_per_epoch = train(model,10,True)
 initial_flops = count_model_params_flops(model,True)[1]
@@ -449,6 +449,7 @@ def custom_loss(lmbda , regularizer_value):
     # print(type(K.categorical_crossentropy(y_true ,y_pred)),K.categorical_crossentropy(y_true ,y_pred),regularizer_value)
     return K.categorical_crossentropy(y_true ,y_pred) + lmbda * regularizer_value
   return loss
+
 
 def my_get_l1_norms_filters(model,first_time):
     """
@@ -498,6 +499,7 @@ def my_get_regularizer_value(model,weight_list_per_epoch,percentage,first_time):
     print(regularizer_value)    
     return regularizer_value
     
+
 def optimize(model,weight_list_per_epoch,epochs,percentage,first_time):
     """
     Arguments:
@@ -511,7 +513,6 @@ def optimize(model,weight_list_per_epoch,epochs,percentage,first_time):
         hisory: accuracies and losses over the process keras library
     """
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
-
 
     img_rows, img_cols = 28, 28
     batch_size = 128
@@ -555,6 +556,11 @@ count = 0
 all_models = list()
 a,b = count_model_params_flops(model,False)
 print(a,b)
+
+#######################################################################
+###################  Model Pruning
+#######################################################################
+
 while validation_accuracy - max_val_acc >= -0.01 and  count < 3:
 
 
@@ -603,8 +609,6 @@ print(filter_pruning_indices[0],filter_pruning_indices[1])
 
 optimize(model,weight_list_per_epoch,20,40,False)
 
-# all_conv_layers = my_get_all_conv_layers(model,first_time)
-
 surgeon = Surgeon(model)
 surgeon.add_job('delete_channels',model.layers[1],channels = filter_pruning_indices[0][:1])
 surgeon.add_job('delete_channels',model.layers[3],channels =filter_pruning_indices[1][:1])
@@ -629,5 +633,5 @@ print("Final Validation Accuracy = ",(max(history.history['val_accuracy'])*100))
 log_df = pd.DataFrame(log_dict)
 log_df
 
-log_df.to_csv('/content/drive/My Drive/paper results/SS3.csv')
+log_df.to_csv(os.path.join('.', 'results', 'lenet5.csv'))
 
