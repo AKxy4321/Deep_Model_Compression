@@ -655,10 +655,6 @@ log_dict['total_flops'].append(b)
 log_dict['filters_in_conv1'].append(model.layers[1].get_weights()[0].shape[-1])
 log_dict['filters_in_conv2'].append(model.layers[3].get_weights()[0].shape[-1])
 print("Final Validation acc = ",(max(history.history['val_acc'])*100))
-output_path = os.path.join('cosine_similarity', 'results', 'cosine_pruned_filters.txt')
-with open(output_path, 'a') as f:
-    f.write('\n Final Validation accuracy:  ' + str(max(history.history['val_acc'])*100) + '\n')
-
 
 log_df = pd.DataFrame(log_dict)
 log_df
