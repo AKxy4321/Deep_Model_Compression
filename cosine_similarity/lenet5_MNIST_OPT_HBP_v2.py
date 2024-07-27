@@ -265,43 +265,43 @@ def my_delete_filters(model,weight_list_per_epoch,percentage,first_time):
     return model_new    
 
 
-def count_conv_params_flops(conv_layer):
-    # out shape is  n_cells_dim1 * (n_cells_dim2 * n_cells_dim3)
-    '''
-    Arguments:
-        conv layer 
-    Return:
-        Number of Parameters, Number of Flops
-    '''
+# def count_conv_params_flops(conv_layer):
+#     # out shape is  n_cells_dim1 * (n_cells_dim2 * n_cells_dim3)
+#     '''
+#     Arguments:
+#         conv layer 
+#     Return:
+#         Number of Parameters, Number of Flops
+#     '''
 
-    out_shape = conv_layer.output_shape
+#     out_shape = conv_layer.output_shape
 
-    n_cells_total = np.prod(out_shape[1:-1])
+#     n_cells_total = np.prod(out_shape[1:-1])
 
-    n_conv_params_total = conv_layer.count_params()
-    # print(n_conv_params_total,len(conv_layer.get_weights()[0]),)
-    conv_flops = 2 * (n_conv_params_total * n_cells_total - len(conv_layer.get_weights()[1]) *n_cells_total)
+#     n_conv_params_total = conv_layer.count_params()
+#     # print(n_conv_params_total,len(conv_layer.get_weights()[0]),)
+#     conv_flops = 2 * (n_conv_params_total * n_cells_total - len(conv_layer.get_weights()[1]) *n_cells_total)
 
-    return n_conv_params_total, conv_flops
+#     return n_conv_params_total, conv_flops
 
 
-def count_dense_params_flops(dense_layer):
-    # out shape is  n_cells_dim1 * (n_cells_dim2 * n_cells_dim3)
-    '''
-    Arguments:
-      dense layer 
-    Return:
-        Number of Parameters, Number of Flops
-    '''
+# def count_dense_params_flops(dense_layer):
+#     # out shape is  n_cells_dim1 * (n_cells_dim2 * n_cells_dim3)
+#     '''
+#     Arguments:
+#       dense layer 
+#     Return:
+#         Number of Parameters, Number of Flops
+#     '''
 
-    out_shape = dense_layer.output_shape
-    n_cells_total = np.prod(out_shape[1:-1])
+#     out_shape = dense_layer.output_shape
+#     n_cells_total = np.prod(out_shape[1:-1])
 
-    n_dense_params_total = dense_layer.count_params()
+#     n_dense_params_total = dense_layer.count_params()
 
-    dense_flops = 2* (n_dense_params_total - len(dense_layer.get_weights()[1]) * n_cells_total)
+#     dense_flops = 2* (n_dense_params_total - len(dense_layer.get_weights()[1]) * n_cells_total)
 
-    return n_dense_params_total, dense_flops
+#     return n_dense_params_total, dense_flops
 
 
 def count_model_params_flops(model,first_time):
@@ -322,18 +322,32 @@ def count_model_params_flops(model,first_time):
     for index,layer in enumerate(model_layers):
         if any(conv_type in str(type(layer)) for conv_type in ['Conv1D', 'Conv2D', 'Conv3D']):
             
-            params, flops = count_conv_params_flops(layer)
+            params = layer.count_params()
+            flops = conv_flops(layer)
             print(index,layer.name,params,flops)
             total_params += params
             total_flops += flops
         elif 'Dense' in str(type(layer)):
             
-            params, flops = count_dense_params_flops(layer)
+            params = layer.count_params()
+            flops = dense_flops(layer)
             print(index,layer.name,params,flops)
             total_params += params
             total_flops += flops
 
     return total_params, int(total_flops)
+
+
+def dense_flops(layer):
+    output_channels = layer.units
+    input_channels = layer.input_shape[-1]
+    return 2 * input_channels * output_channels
+
+
+def conv_flops(layer):
+    output_size = layer.output_shape[1]
+    kernel_shape = layer.get_weights()[0].shape
+    return 2 * (output_size ** 2) * (kernel_shape[0] ** 2) * kernel_shape[2] * kernel_shape[3]
 
 
 class Get_Weights(Callback):
@@ -423,7 +437,7 @@ def train(model,epochs,first_time):
 ###################  Model Training
 #######################################################################
 
-model,history,weight_list_per_epoch = train(model,10,True)
+model,history,weight_list_per_epoch = train(model,1,True)
 initial_flops = count_model_params_flops(model,True)[1]
 log_dict = dict()
 log_dict['train_loss'] = []
