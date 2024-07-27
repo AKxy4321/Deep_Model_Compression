@@ -725,9 +725,9 @@ def optimize(model,weight_list_per_epoch,epochs,percentage,first_time):
 #this dictionary is to log the parameters and is later converted into a dataframe.
 log_dict = dict()
 log_dict['train_loss'] = []
-log_dict['train_acc'] = []
+log_dict['train_accuracy'] = []
 log_dict['val_loss'] = []
-log_dict['val_acc'] = []
+log_dict['val_accuracy'] = []
 log_dict['total_params'] = []
 log_dict['total_flops'] = []
 choice = input("USE PRETRAINED VGG16 FOR CIFAR10 [Y/N] : ")
@@ -756,17 +756,17 @@ if choice == 'Y':
     x_train,x_test = normalize(x_train,x_test)
     y_train = keras.utils.to_categorical(y_train,10)
     y_test = keras.utils.to_categorical(y_test,10)
-    train_loss,train_acc = model.evaluate(x_train,y_train)
-    val_loss,val_acc = model.evaluate(x_test,y_test)
-    validation_accuracy = val_acc
+    train_loss,train_accuracy = model.evaluate(x_train,y_train)
+    val_loss,val_accuracy = model.evaluate(x_test,y_test)
+    validation_accuracy = val_accuracy
     log_dict['train_loss'].append(train_loss)
-    log_dict['train_acc'].append(train_acc)
+    log_dict['train_accuracy'].append(train_accuracy)
     log_dict['val_loss'].append(val_loss)
-    log_dict['val_acc'].append(val_acc)
+    log_dict['val_accuracy'].append(val_accuracy)
 
 elif choice == 'N':
     # train for first time
-    my_vgg = cifar10vgg(first_time=True,epochs=250)
+    my_vgg = cifar10vgg(first_time=True,epochs=1)
     model, history ,weight_list_per_epoch= my_vgg.model, my_vgg.history, my_vgg.weight_list_per_epoch
 
     model.save_weights(os.path.join('.', 'models', 'cifarvgg10.h5'))
@@ -785,12 +785,12 @@ elif choice == 'N':
             w_11=weight_list_per_epoch[10],
             w_12=weight_list_per_epoch[11],
             w_13=weight_list_per_epoch[12])
-    best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
+    best_acc_index = history.history['val_accuracy'].index(max(history.history['val_accuracy']))
     log_dict['train_loss'].append(history.history['loss'][best_acc_index])
-    log_dict['train_acc'].append(history.history['acc'][best_acc_index])
+    log_dict['train_accuracy'].append(history.history['accuracy'][best_acc_index])
     log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
-    log_dict['val_acc'].append(history.history['val_acc'][best_acc_index])
-    validation_accuracy = max(history.history['val_acc'])
+    log_dict['val_accuracy'].append(history.history['val_accuracy'][best_acc_index])
+    validation_accuracy = max(history.history['val_accuracy'])
 
 a,b = count_model_params_flops(model,True)
 log_dict['total_params'].append(a)
@@ -834,12 +834,12 @@ while validation_accuracy - max_val_acc >= -0.02 :
 
     a,b = count_model_params_flops(model,False)
     
-    validation_accuracy = max(history.history['val_acc'])
-    best_acc_index = history.history['val_acc'].index(max(history.history['val_acc']))
+    validation_accuracy = max(history.history['val_accuracy'])
+    best_acc_index = history.history['val_accuracy'].index(max(history.history['val_accuracy']))
     log_dict['train_loss'].append(history.history['loss'][best_acc_index])
-    log_dict['train_acc'].append(history.history['acc'][best_acc_index])
+    log_dict['train_accuracy'].append(history.history['accuracy'][best_acc_index])
     log_dict['val_loss'].append(history.history['val_loss'][best_acc_index])
-    log_dict['val_acc'].append(history.history['val_acc'][best_acc_index])
+    log_dict['val_accuracy'].append(history.history['val_accuracy'][best_acc_index])
     log_dict['total_params'].append(a)
     log_dict['total_flops'].append(b)
     log_df = pd.DataFrame(log_dict)
