@@ -384,7 +384,7 @@ model.add(Dense(units=500, activation='relu'))
 model.add(Dense(units=10, activation = 'softmax'))
 
 
-def train(model,epochs,first_time):
+def train(model,epochs,first_time, learning_rate=0.001):
     """
     Arguments:
         model:model to be trained
@@ -395,6 +395,9 @@ def train(model,epochs,first_time):
         history: accuracies and losses (keras history)
         weight_list_per_epoch = all weight tensors per epochs in a list
     """
+
+    lr = learning_rate
+
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
     img_rows, img_cols = 28, 28
@@ -418,7 +421,7 @@ def train(model,epochs,first_time):
     y_train = tf.keras.utils.to_categorical(y_train, num_classes)
     y_test = tf.keras.utils.to_categorical(y_test, num_classes)
 
-    adam = optimizers.Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, amsgrad=False)
+    adam = optimizers.Adam(learning_rate=lr, beta_1=0.9, beta_2=0.999, amsgrad=False)
     sgd = optimizers.SGD(lr=0.05, decay=1e-6, momentum=0.9, nesterov=True)
     model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy']) 
 
@@ -636,7 +639,7 @@ model.summary()
 
 # model.summary()
 
-model,history,weight_list_per_epoch = train(model,60,False)
+model,history,weight_list_per_epoch = train(model,250,False,learning_rate=0.001)
 
 best_acc_index = history.history['val_accuracy'].index(max(history.history['val_accuracy']))
 log_dict['train_loss'].append(history.history['loss'][best_acc_index])
