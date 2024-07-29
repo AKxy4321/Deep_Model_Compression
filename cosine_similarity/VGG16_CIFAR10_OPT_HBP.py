@@ -362,7 +362,7 @@ class cifar10vgg:
         else:
             #change
 
-            self.model.load_weights(os.path.join('.', 'models', 'cifarvgg10.h5'))
+            self.model.load_weights(os.path.join('.', 'models', 'cifar10vgg.h5'))
 
 
     def build_model(self):
@@ -751,6 +751,31 @@ if choice == 'Y':
     data = np.load(os.path.join('.', 'models', 'vgg_weights.npz'))
     for i in range(13):
         weight_list_per_epoch.append(data['w_{}'.format(i+1)])
+    
+    ###############################################################
+    # Training Model in Parts
+    # my_vgg.epochs = 50
+    # model, history ,train_weight_list_per_epoch = my_vgg.train(model)
+    # my_vgg.model.save_weights(os.path.join('.', 'models', 'cifar10vgg.h5'))
+    # print("Model is Saved")
+    # #save the weights of training process
+    # np.savez(os.path.join('.', 'models', 'vgg_weights.npz')
+    #         ,w_1=train_weight_list_per_epoch[0],
+    #         w_2=train_weight_list_per_epoch[1],
+    #         w_3=train_weight_list_per_epoch[2],
+    #         w_4=train_weight_list_per_epoch[3],
+    #         w_5=train_weight_list_per_epoch[4],
+    #         w_6=train_weight_list_per_epoch[5],
+    #         w_7=train_weight_list_per_epoch[6],
+    #         w_8=train_weight_list_per_epoch[7],
+    #         w_9=train_weight_list_per_epoch[8],
+    #         w_10=train_weight_list_per_epoch[9],
+    #         w_11=train_weight_list_per_epoch[10],
+    #         w_12=train_weight_list_per_epoch[11],
+    #         w_13=train_weight_list_per_epoch[12])
+    # print("Weights are Saved")
+
+    ###############################################################
 
     (x_train,y_train),(x_test,y_test) = cifar10.load_data()
     x_train,x_test = normalize(x_train,x_test)
@@ -766,7 +791,7 @@ if choice == 'Y':
 
 elif choice == 'N':
     # train for first time
-    my_vgg = cifar10vgg(first_time=True,epochs=1)
+    my_vgg = cifar10vgg(first_time=True,epochs=75)
     model, history ,weight_list_per_epoch= my_vgg.model, my_vgg.history, my_vgg.weight_list_per_epoch
 
     model.save_weights(os.path.join('.', 'models', 'cifarvgg10.h5'))
